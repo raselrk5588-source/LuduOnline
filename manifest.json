@@ -1,6 +1,6 @@
 {
-    "name": "খেলাঘর - Khelaghor",
-    "short_name": "খেলাঘর",
+    "name": "গেমআড্ডা - GameAdda",
+    "short_name": "গেমআড্ডা",
     "description": "ব্রাউজারেই খেলুন দারুণ সব গেম!",
     "start_url": "./hub.html",
     "display": "standalone",

@@ -329,7 +329,7 @@ function handleMoveEnd(color, i, diceValue) {
         switchTurn();
     }
     
-    if (isOnlineMode && myColor === color) {
+    if (isOnlineMode && (myColor === color || isBot[color])) {
         syncGameState();
     }
 }
@@ -375,7 +375,7 @@ function rollDice(color) {
         diceValue = Math.floor(Math.random() * 5) + 1;
     }
 
-    if (isOnlineMode && myColor === color) {
+    if (isOnlineMode && (myColor === color || isBot[color])) {
         db.ref('rooms/' + currentRoomId + '/lastRoll').set({
             color: color,
             value: diceValue,
@@ -580,11 +580,25 @@ function joinLobby() {
                 li.style.alignItems = 'center';
                 li.style.padding = '8px';
                 li.style.borderBottom = '1px solid #eee';
-                li.innerHTML = `<span>${pid}</span> 
+                li.innerHTML = `<span style="color: #333; font-weight: 600;">${pid}</span> 
                                 <button onclick="sendInvite('${pid}')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
                 listEl.appendChild(li);
             }
         }
+        let botNames = ['আকাশ', 'সুমাইয়া', 'সাদিয়া', 'নয়ন'];
+        botNames.forEach(bot => {
+            let li = document.createElement('li');
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.alignItems = 'center';
+            li.style.padding = '8px';
+            li.style.borderBottom = '1px solid #eee';
+            li.innerHTML = `<span style="color: #333; font-weight: 600;">${bot}</span> 
+                            <button onclick="sendInvite('${bot}')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
+            listEl.appendChild(li);
+            count++;
+        });
+
         if (count === 0) {
             listEl.innerHTML = '<li style="text-align: center; color: #777;">এই মুহূর্তে কেউ অনলাইনে নেই।</li>';
         }
@@ -654,6 +668,26 @@ window.sendInvite = function(receiverId) {
 };
 
 function sendSingleInvite(receiverId) {
+    const isAiBot = ['আকাশ', 'সুমাইয়া', 'সাদিয়া', 'নয়ন'].includes(receiverId);
+    if (isAiBot) {
+        document.getElementById('lobby-status').innerText = `${receiverId} ইনভাইট গ্রহণ করছে...`;
+        setTimeout(() => {
+            // Find available color
+            db.ref('rooms/' + currentRoomId + '/players').once('value').then(snap => {
+                let p = snap.val() || {};
+                let currentOnline = Object.keys(p);
+                let availableColors = ['green', 'blue', 'yellow', 'red'].filter(c => !currentOnline.includes(c));
+                if (availableColors.length > 0) {
+                    let botColor = availableColors[0];
+                    isBot[botColor] = true;
+                    db.ref('rooms/' + currentRoomId + '/players/' + botColor).set(true);
+                    document.getElementById('lobby-status').innerText = `${receiverId} রুমে জয়েন করেছে!`;
+                }
+            });
+        }, 1000);
+        return;
+    }
+
     db.ref('invites/' + receiverId).set({
         sender: myPlayerId,
         roomId: currentRoomId,
@@ -683,7 +717,7 @@ function joinRoomAsGuest(roomId) {
                 return;
             }
             
-            let availableColors = ['green', 'yellow', 'blue', 'red'].filter(c => !playersInRoom.includes(c));
+            let availableColors = ['green', 'blue', 'yellow', 'red'].filter(c => !playersInRoom.includes(c));
             myColor = availableColors[0];
             currentRoomId = roomId;
             isOnlineMode = true;
