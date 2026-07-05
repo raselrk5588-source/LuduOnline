@@ -396,7 +396,7 @@ function rollDice(color) {
         if (validMoves.length === 0) {
             setTimeout(() => {
                 switchTurn();
-                if (isOnlineMode && myColor === color) syncGameState();
+                if (isOnlineMode && (myColor === color || isBot[color])) syncGameState();
             }, 1000);
         } else {
             if (isBot[color]) {
@@ -685,7 +685,7 @@ function sendSingleInvite(receiverId) {
                 if (availableColors.length > 0) {
                     let botColor = availableColors[0];
                     isBot[botColor] = true;
-                    db.ref('rooms/' + currentRoomId + '/players/' + botColor).set(true);
+                    db.ref('rooms/' + currentRoomId + '/players/' + botColor).set('bot'); // Save as 'bot' instead of true
                     document.getElementById('lobby-status').innerText = `${receiverId} রুমে জয়েন করেছে!`;
                 }
             });
@@ -767,6 +767,20 @@ function listenToRoom() {
         if(p) {
             let currentOnlinePlayers = Object.keys(p);
             
+            // Sync bot status for all clients
+            currentOnlinePlayers.forEach(c => {
+                if (p[c] === 'bot') {
+                    // Only one human should control the bots to prevent duplicate rolls.
+                    // The first human in the players list acts as the master.
+                    let firstHuman = currentOnlinePlayers.find(pc => p[pc] !== 'bot');
+                    if (firstHuman === myColor) {
+                        isBot[c] = true;
+                    } else {
+                        isBot[c] = false; // Guests don't control the bot
+                    }
+                }
+            });
+
             // Hide panels of inactive colors
             players.forEach(c => {
                 if(!currentOnlinePlayers.includes(c)) {
@@ -792,7 +806,7 @@ function listenToRoom() {
                 let currentActiveColor = players[currentPlayerIndex];
                 if (!currentOnlinePlayers.includes(currentActiveColor)) {
                     // Only let the first available human player initiate the skip to prevent race conditions
-                    let firstHuman = currentOnlinePlayers.find(c => !isBot[c]);
+                    let firstHuman = currentOnlinePlayers.find(c => p[c] !== 'bot');
                     if (myColor === firstHuman) {
                         switchTurn();
                         syncGameState();
