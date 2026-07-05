@@ -585,7 +585,7 @@ function joinLobby() {
                 li.style.padding = '8px';
                 li.style.borderBottom = '1px solid #eee';
                 li.innerHTML = `<span style="color: #333; font-weight: 600;">${pid}</span> 
-                                <button onclick="sendInvite('${pid}')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
+                                <button onclick="sendInvite('${pid}', this)" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
                 listEl.appendChild(li);
             }
         }
@@ -598,7 +598,7 @@ function joinLobby() {
             li.style.padding = '8px';
             li.style.borderBottom = '1px solid #eee';
             li.innerHTML = `<span style="color: #333; font-weight: 600;">${bot}</span> 
-                            <button onclick="sendInvite('${bot}')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
+                            <button onclick="sendInvite('${bot}', this)" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
             listEl.appendChild(li);
             count++;
         });
@@ -617,13 +617,15 @@ function joinLobby() {
             
             document.getElementById('btn-accept-invite').onclick = () => {
                 document.getElementById('invite-modal').style.display = 'none';
-                db.ref('invites/' + myPlayerId).remove(); // Clear invite
+                db.ref('invites/' + myPlayerId).update({ status: 'accepted' });
+                setTimeout(() => db.ref('invites/' + myPlayerId).remove(), 2000);
                 joinRoomAsGuest(invite.roomId);
             };
             
             document.getElementById('btn-decline-invite').onclick = () => {
                 document.getElementById('invite-modal').style.display = 'none';
-                db.ref('invites/' + myPlayerId).remove(); // Clear invite
+                db.ref('invites/' + myPlayerId).update({ status: 'declined' });
+                setTimeout(() => db.ref('invites/' + myPlayerId).remove(), 2000);
             };
         } else {
             document.getElementById('invite-modal').style.display = 'none';
@@ -633,7 +635,7 @@ function joinLobby() {
 
 let lobbyRoomListener = null;
 
-window.sendInvite = function(receiverId) {
+window.sendInvite = function(receiverId, btn) {
     if (!currentRoomId) {
         let newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
         currentRoomId = newRoomId;
@@ -665,14 +667,20 @@ window.sendInvite = function(receiverId) {
                     document.getElementById('btn-start-online-game').innerText = `গেম শুরু করুন (${count}/4 জন যুক্ত)`;
                 }
             });
-            sendSingleInvite(receiverId);
+            sendSingleInvite(receiverId, btn);
         });
     } else {
-        sendSingleInvite(receiverId);
+        sendSingleInvite(receiverId, btn);
     }
 };
 
-function sendSingleInvite(receiverId) {
+function sendSingleInvite(receiverId, btn) {
+    if (btn) {
+        btn.innerText = 'পাঠানো হয়েছে';
+        btn.style.backgroundColor = 'gray';
+        btn.disabled = true;
+    }
+
     const isAiBot = ['আকাশ', 'সুমাইয়া', 'সাদিয়া', 'নয়ন'].includes(receiverId);
     if (isAiBot) {
         document.getElementById('lobby-status').innerText = `${receiverId} ইনভাইট গ্রহণ করছে...`;
@@ -687,6 +695,10 @@ function sendSingleInvite(receiverId) {
                     isBot[botColor] = true;
                     db.ref('rooms/' + currentRoomId + '/players/' + botColor).set('bot'); // Save as 'bot' instead of true
                     document.getElementById('lobby-status').innerText = `${receiverId} রুমে জয়েন করেছে!`;
+                    if (btn) {
+                        btn.innerText = 'যুক্ত হয়েছে';
+                        btn.style.backgroundColor = '#4CAF50';
+                    }
                 }
             });
         }, 1000);
@@ -696,9 +708,35 @@ function sendSingleInvite(receiverId) {
     db.ref('invites/' + receiverId).set({
         sender: myPlayerId,
         roomId: currentRoomId,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        status: 'pending'
     });
     document.getElementById('lobby-status').innerText = `${receiverId} কে ইনভাইট পাঠানো হয়েছে...`;
+
+    // Listen for invite responses
+    let inviteRef = db.ref('invites/' + receiverId);
+    let listener = inviteRef.on('value', snap => {
+        let inviteData = snap.val();
+        if (inviteData && inviteData.status === 'declined') {
+            if (btn) {
+                btn.innerText = 'বাতিল';
+                btn.style.backgroundColor = '#f44336';
+                setTimeout(() => {
+                    btn.innerText = 'ইনভাইট';
+                    btn.style.backgroundColor = '#2196F3';
+                    btn.disabled = false;
+                }, 3000);
+            }
+            document.getElementById('lobby-status').innerText = `${receiverId} ইনভাইট বাতিল করেছে।`;
+            inviteRef.off('value', listener);
+        } else if (inviteData && inviteData.status === 'accepted') {
+            if (btn) {
+                btn.innerText = 'যুক্ত হয়েছে';
+                btn.style.backgroundColor = '#4CAF50';
+            }
+            inviteRef.off('value', listener);
+        }
+    });
 }
 
 // Host clicks Start Game
