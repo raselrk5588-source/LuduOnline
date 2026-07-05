@@ -115,6 +115,10 @@ function showWinScreen(color, customMessage = "অভিনন্দন!") {
     `;
     document.body.appendChild(el);
     
+    if (customMessage.includes('ডিসকানেক্ট')) {
+        setTimeout(() => location.reload(), 3000);
+    }
+
     // Confetti generator
     for(let i=0; i<80; i++) {
         let conf = document.createElement('div');
