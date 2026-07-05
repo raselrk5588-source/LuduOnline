@@ -584,8 +584,22 @@ function joinLobby() {
                 li.style.alignItems = 'center';
                 li.style.padding = '8px';
                 li.style.borderBottom = '1px solid #eee';
+                let inviteStatus = window.sentInvites && window.sentInvites[pid] ? window.sentInvites[pid] : '';
+                let btnStyle = 'background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;';
+                let btnText = 'ইনভাইট';
+                let disabled = '';
+                if (inviteStatus === 'pending') {
+                    btnStyle = 'background:gray;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                    btnText = 'পাঠানো হয়েছে';
+                    disabled = 'disabled';
+                } else if (inviteStatus === 'accepted') {
+                    btnStyle = 'background:#4CAF50;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                    btnText = 'যুক্ত হয়েছে';
+                    disabled = 'disabled';
+                }
+                
                 li.innerHTML = `<span style="color: #333; font-weight: 600;">${pid}</span> 
-                                <button onclick="sendInvite('${pid}', this)" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
+                                <button id="invite-btn-${pid}" onclick="sendInvite('${pid}', this)" style="${btnStyle}" ${disabled}>${btnText}</button>`;
                 listEl.appendChild(li);
             }
         }
@@ -597,8 +611,22 @@ function joinLobby() {
             li.style.alignItems = 'center';
             li.style.padding = '8px';
             li.style.borderBottom = '1px solid #eee';
+            let inviteStatus = window.sentInvites && window.sentInvites[bot] ? window.sentInvites[bot] : '';
+            let btnStyle = 'background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;';
+            let btnText = 'ইনভাইট';
+            let disabled = '';
+            if (inviteStatus === 'pending') {
+                btnStyle = 'background:gray;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                btnText = 'পাঠানো হয়েছে';
+                disabled = 'disabled';
+            } else if (inviteStatus === 'accepted') {
+                btnStyle = 'background:#4CAF50;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                btnText = 'যুক্ত হয়েছে';
+                disabled = 'disabled';
+            }
+
             li.innerHTML = `<span style="color: #333; font-weight: 600;">${bot}</span> 
-                            <button onclick="sendInvite('${bot}', this)" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
+                            <button id="invite-btn-${bot}" onclick="sendInvite('${bot}', this)" style="${btnStyle}" ${disabled}>${btnText}</button>`;
             listEl.appendChild(li);
             count++;
         });
@@ -652,6 +680,7 @@ window.sendInvite = function(receiverId, btn) {
         // Create room first
         db.ref('rooms/' + currentRoomId).set({
             players: { green: true },
+            names: { green: myPlayerId },
             gameState: initialGameState
         }).then(() => {
             db.ref('rooms/' + currentRoomId + '/players/green').onDisconnect().remove();
@@ -664,7 +693,20 @@ window.sendInvite = function(receiverId, btn) {
                 let p = snap.val();
                 if(p) {
                     let count = Object.keys(p).length;
-                    document.getElementById('btn-start-online-game').innerText = `গেম শুরু করুন (${count}/4 জন যুক্ত)`;
+                    let btnStart = document.getElementById('btn-start-online-game');
+                    if (btnStart) btnStart.innerText = `গেম শুরু করুন (${count}/4 জন যুক্ত)`;
+                    
+                    db.ref('rooms/' + currentRoomId + '/names').once('value').then(nameSnap => {
+                        let names = nameSnap.val() || {};
+                        let listHTML = '';
+                        Object.keys(p).forEach(c => {
+                            let name = names[c] || c;
+                            let type = p[c] === 'bot' ? ' (বট)' : '';
+                            listHTML += `<li style="padding: 5px; border-bottom: 1px solid #ddd; color: #333; font-weight: bold;">✅ ${name}${type}</li>`;
+                        });
+                        let listEl = document.getElementById('joined-players-list');
+                        if (listEl) listEl.innerHTML = listHTML;
+                    });
                 }
             });
             sendSingleInvite(receiverId, btn);
@@ -694,7 +736,12 @@ function sendSingleInvite(receiverId, btn) {
                     let botColor = availableColors[0];
                     isBot[botColor] = true;
                     db.ref('rooms/' + currentRoomId + '/players/' + botColor).set('bot'); // Save as 'bot' instead of true
+                    db.ref('rooms/' + currentRoomId + '/names/' + botColor).set(receiverId);
                     document.getElementById('lobby-status').innerText = `${receiverId} রুমে জয়েন করেছে!`;
+                    
+                    if (!window.sentInvites) window.sentInvites = {};
+                    window.sentInvites[receiverId] = 'accepted';
+                    
                     if (btn) {
                         btn.innerText = 'যুক্ত হয়েছে';
                         btn.style.backgroundColor = '#4CAF50';
@@ -704,6 +751,9 @@ function sendSingleInvite(receiverId, btn) {
         }, 1000);
         return;
     }
+
+    if (!window.sentInvites) window.sentInvites = {};
+    window.sentInvites[receiverId] = 'pending';
 
     db.ref('invites/' + receiverId).set({
         sender: myPlayerId,
@@ -718,21 +768,30 @@ function sendSingleInvite(receiverId, btn) {
     let listener = inviteRef.on('value', snap => {
         let inviteData = snap.val();
         if (inviteData && inviteData.status === 'declined') {
-            if (btn) {
-                btn.innerText = 'বাতিল';
-                btn.style.backgroundColor = '#f44336';
+            window.sentInvites[receiverId] = 'declined';
+            let currentBtn = document.getElementById('invite-btn-' + receiverId) || btn;
+            if (currentBtn) {
+                currentBtn.innerText = 'বাতিল';
+                currentBtn.style.backgroundColor = '#f44336';
                 setTimeout(() => {
-                    btn.innerText = 'ইনভাইট';
-                    btn.style.backgroundColor = '#2196F3';
-                    btn.disabled = false;
+                    if (window.sentInvites[receiverId] === 'declined') delete window.sentInvites[receiverId];
+                    let retryBtn = document.getElementById('invite-btn-' + receiverId) || currentBtn;
+                    if (retryBtn) {
+                        retryBtn.innerText = 'ইনভাইট';
+                        retryBtn.style.backgroundColor = '#2196F3';
+                        retryBtn.disabled = false;
+                        retryBtn.style.cursor = 'pointer';
+                    }
                 }, 3000);
             }
             document.getElementById('lobby-status').innerText = `${receiverId} ইনভাইট বাতিল করেছে।`;
             inviteRef.off('value', listener);
         } else if (inviteData && inviteData.status === 'accepted') {
-            if (btn) {
-                btn.innerText = 'যুক্ত হয়েছে';
-                btn.style.backgroundColor = '#4CAF50';
+            window.sentInvites[receiverId] = 'accepted';
+            let currentBtn = document.getElementById('invite-btn-' + receiverId) || btn;
+            if (currentBtn) {
+                currentBtn.innerText = 'যুক্ত হয়েছে';
+                currentBtn.style.backgroundColor = '#4CAF50';
             }
             inviteRef.off('value', listener);
         }
@@ -775,6 +834,7 @@ function joinRoomAsGuest(roomId) {
             db.ref('lobby/' + myPlayerId).set('playing');
             
             db.ref('rooms/' + currentRoomId + '/players/' + myColor).set(true).then(() => {
+                db.ref('rooms/' + currentRoomId + '/names/' + myColor).set(myPlayerId);
                 db.ref('rooms/' + currentRoomId + '/players/' + myColor).onDisconnect().remove();
                 
                 // Wait for host to start
