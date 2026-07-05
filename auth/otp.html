@@ -28,7 +28,13 @@
 
     <script>
     async function verifyOtp() {
-      const otp = document.getElementById("otp-input").value;
+      const otp = document.getElementById("otp-input").value.trim();
+      
+      if (!otp) {
+          alert("অনুগ্রহ করে ওটিপি (OTP) দিন।");
+          return;
+      }
+      
       const phone = localStorage.getItem("phone");
       const ref = localStorage.getItem("ref");
       const btn = document.getElementById("auth-btn");

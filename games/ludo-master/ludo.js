@@ -743,7 +743,11 @@ function joinRoomAsGuest(roomId) {
                 document.getElementById('lobby-status').innerText = "হোস্ট গেম শুরু করার জন্য অপেক্ষা করুন...";
                 
                 db.ref('rooms/' + currentRoomId + '/gameState/status').on('value', snap => {
-                    if (snap.val() === 'playing') {
+                    if (snap.val() === null) {
+                        db.ref('rooms/' + currentRoomId + '/gameState/status').off();
+                        alert('হোস্ট রুমটি বন্ধ করে দিয়েছেন!');
+                        location.reload();
+                    } else if (snap.val() === 'playing') {
                         db.ref('rooms/' + currentRoomId + '/gameState/status').off();
                         listenToRoom();
                     }
@@ -783,9 +787,28 @@ function listenToRoom() {
                 return;
             }
             
+            // Handle turn skip if active player disconnected
+            if (hasGameStarted && activePlayers.length > 0) {
+                let currentActiveColor = players[currentPlayerIndex];
+                if (!currentOnlinePlayers.includes(currentActiveColor)) {
+                    // Only let the first available human player initiate the skip to prevent race conditions
+                    let firstHuman = currentOnlinePlayers.find(c => !isBot[c]);
+                    if (myColor === firstHuman) {
+                        switchTurn();
+                        syncGameState();
+                    }
+                }
+            }
+            
             activePlayers = currentOnlinePlayers;
             updateAllTokenPositions();
             updateTurnVisuals();
+        } else {
+            // Room was deleted
+            if (hasGameStarted) {
+                alert('রুমটি বন্ধ হয়ে গেছে বা সবাই ডিসকানেক্ট হয়ে গেছে!');
+                location.reload();
+            }
         }
     });
 

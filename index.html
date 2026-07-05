@@ -380,8 +380,7 @@
                         async () => {
                             // Bypass for demo number
                             if (phone === '01700000000' || phone === '01800000000') {
-                                localStorage.removeItem('isLoggedIn');
-                                localStorage.removeItem('phone');
+                                localStorage.clear();
                                 showCustomModal('সফল!', 'আনসাবস্ক্রাইব সফল হয়েছে।', false, () => {
                                     logoutAndShowLanding();
                                 });
@@ -400,8 +399,7 @@
                                 const data = await res.json();
                                 
                                 if (data.success || data.subscriptionStatus === 'UNREGISTERED') {
-                                    localStorage.removeItem('isLoggedIn');
-                                    localStorage.removeItem('phone');
+                                    localStorage.clear();
                                     logoutAndShowLanding();
                                 } else {
                                     showCustomModal('ব্যর্থ!', data.error || 'আনসাবস্ক্রাইব করতে ব্যর্থ হয়েছে।', false);
@@ -493,8 +491,7 @@
         }
 
         function logoutAndShowLanding() {
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('phone');
+            localStorage.clear();
             updateUIVisibility();
         }
 
