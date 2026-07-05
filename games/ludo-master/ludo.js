@@ -4,6 +4,17 @@ const playerNames = { 'green': 'সবুজ', 'yellow': 'হলুদ', 'blue':
 
 let currentPlayerIndex = 0;
 let gameState = 'waiting_for_mode'; // waiting_for_mode, waiting_for_roll, rolling, waiting_for_move, moving
+let isOnlineMode = false;
+let myColor = null;
+let currentRoomId = null;
+let db = null;
+let hasGameStarted = false;
+let myPlayerId = localStorage.getItem('ludoPlayerName');
+if (myPlayerId) {
+    // Fix for older names that might have # saved in localStorage
+    myPlayerId = myPlayerId.replace('#', '-');
+    localStorage.setItem('ludoPlayerName', myPlayerId);
+}
 
 const isBot = {
     'green': false,
@@ -92,16 +103,14 @@ function showFloatingEmoji(emoji, x, y) {
     setTimeout(() => el.remove(), 2000);
 }
 
-function showWinScreen(color) {
+function showWinScreen(color, customMessage = "অভিনন্দন!") {
     let el = document.createElement('div');
     el.className = 'win-overlay';
     
-    let colorHex = color === 'yellow' ? '#fbd109' : (color === 'green' ? '#30a241' : (color === 'red' ? '#e82121' : '#2c51b6'));
-    
     el.innerHTML = `
         <div class="trophy">🏆</div>
-        <h1 style="color: ${colorHex}">${playerNames[color]} প্রথম হয়েছে!</h1>
-        <p>অভিনন্দন! 🎉</p>
+        <h1 style="color: #fff">${playerNames[color]} প্রথম হয়েছে!</h1>
+        <p style="color: #ffcccc; font-size: 24px; margin-top: -10px;">${customMessage}</p>
         <button onclick="location.reload()" style="margin-top:20px; padding: 15px 30px; font-size:20px; cursor:pointer; border-radius:10px; border:none; background:#fff; color:#000; font-weight:bold; font-family: 'Hind Siliguri', sans-serif;">আবার খেলুন</button>
     `;
     document.body.appendChild(el);
@@ -191,9 +200,15 @@ function updateTurnVisuals() {
         if(color === players[currentPlayerIndex]) {
             rollBtns[color].classList.remove('disabled');
             rollBtns[color].classList.add('active');
+            
+            if (isOnlineMode && color !== myColor) {
+                rollBtns[color].classList.add('remote-turn');
+            } else {
+                rollBtns[color].classList.remove('remote-turn');
+            }
         } else {
             rollBtns[color].classList.add('disabled');
-            rollBtns[color].classList.remove('active', 'has-result');
+            rollBtns[color].classList.remove('active', 'has-result', 'remote-turn');
         }
     });
 
@@ -313,6 +328,19 @@ function handleMoveEnd(color, i, diceValue) {
     } else {
         switchTurn();
     }
+    
+    if (isOnlineMode && myColor === color) {
+        syncGameState();
+    }
+}
+
+function syncGameState() {
+    if (isOnlineMode && currentRoomId) {
+        db.ref('rooms/' + currentRoomId + '/gameState').update({
+            currentPlayerIndex: currentPlayerIndex,
+            tokenPositions: tokenPositions
+        });
+    }
 }
 
 function getDiceRotation(value, color) {
@@ -347,6 +375,14 @@ function rollDice(color) {
         diceValue = Math.floor(Math.random() * 5) + 1;
     }
 
+    if (isOnlineMode && myColor === color) {
+        db.ref('rooms/' + currentRoomId + '/lastRoll').set({
+            color: color,
+            value: diceValue,
+            timestamp: Date.now()
+        });
+    }
+
     dice3D[color].style.transform = getDiceRotation(diceValue, color);
 
     setTimeout(() => {
@@ -354,7 +390,10 @@ function rollDice(color) {
         let validMoves = evaluateValidMoves(color, diceValue);
         
         if (validMoves.length === 0) {
-            setTimeout(switchTurn, 1000);
+            setTimeout(() => {
+                switchTurn();
+                if (isOnlineMode && myColor === color) syncGameState();
+            }, 1000);
         } else {
             if (isBot[color]) {
                 // AI picks move
@@ -415,7 +454,13 @@ function botMove(color, validMoves, diceValue) {
 
 players.forEach(color => {
     rollBtns[color].addEventListener('click', () => {
-        if (!isBot[color]) rollDice(color);
+        if (!isBot[color]) {
+            if(isOnlineMode && color !== myColor) {
+                alert("এটি আপনার চাল নয়!");
+                return;
+            }
+            rollDice(color);
+        }
     });
 });
 
@@ -445,3 +490,296 @@ document.getElementById('btn-robot').onclick = () => {
     document.getElementById('game-area').style.display = 'block';
     updateTurnVisuals();
 };
+
+// Online Mode UI Logic
+document.getElementById('btn-online').onclick = () => {
+    if (!myPlayerId) {
+        document.getElementById('player-name-modal').style.display = 'flex';
+    } else {
+        showOnlineLobby();
+    }
+};
+
+document.getElementById('btn-save-name').onclick = () => {
+    let name = document.getElementById('player-name-input').value.trim();
+    if (name === '') {
+        alert("দয়া করে একটি নাম দিন!");
+        return;
+    }
+    // Append a random 4-digit code to make it unique (Firebase doesn't allow #)
+    let randomCode = Math.floor(1000 + Math.random() * 9000);
+    myPlayerId = name + "-" + randomCode;
+    localStorage.setItem('ludoPlayerName', myPlayerId);
+    
+    document.getElementById('player-name-modal').style.display = 'none';
+    showOnlineLobby();
+};
+
+function showOnlineLobby() {
+    document.getElementById('start-menu').style.display = 'none';
+    document.getElementById('online-lobby-menu').style.display = 'flex';
+    document.getElementById('my-player-id').innerText = myPlayerId;
+    initFirebase();
+}
+
+document.getElementById('btn-back-to-menu-from-lobby').onclick = () => {
+    document.getElementById('online-lobby-menu').style.display = 'none';
+    document.getElementById('start-menu').style.display = 'flex';
+    if (db) {
+        db.ref('lobby/' + myPlayerId).remove();
+    }
+};
+
+// Firebase Logic
+function initFirebase() {
+    if (firebase.apps.length === 0) {
+        // We add dummy values for apiKey, etc. because the Firebase SDK sometimes throws an error if they are entirely missing, even when the Database is public.
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForPublicDatabase12345",
+            authDomain: "khelaghorludu.firebaseapp.com",
+            databaseURL: "https://khelaghorludu-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "khelaghorludu",
+            storageBucket: "khelaghorludu.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456"
+        };
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            joinLobby();
+        } catch(e) {
+            document.getElementById('lobby-status').innerText = "Firebase Error: " + e.message;
+            console.error(e);
+        }
+    } else {
+        db = firebase.database();
+        joinLobby();
+    }
+}
+
+function joinLobby() {
+    let myLobbyRef = db.ref('lobby/' + myPlayerId);
+    // Remove from lobby on disconnect
+    myLobbyRef.onDisconnect().remove();
+    // Add to lobby
+    myLobbyRef.set(true);
+
+    // Listen to all online players
+    db.ref('lobby').on('value', snapshot => {
+        let players = snapshot.val() || {};
+        let listEl = document.getElementById('online-players-list');
+        listEl.innerHTML = '';
+        
+        let count = 0;
+        for (let pid in players) {
+            if (pid !== myPlayerId) {
+                count++;
+                let li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.alignItems = 'center';
+                li.style.padding = '8px';
+                li.style.borderBottom = '1px solid #eee';
+                li.innerHTML = `<span>${pid}</span> 
+                                <button onclick="sendInvite('${pid}')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">ইনভাইট</button>`;
+                listEl.appendChild(li);
+            }
+        }
+        if (count === 0) {
+            listEl.innerHTML = '<li style="text-align: center; color: #777;">এই মুহূর্তে কেউ অনলাইনে নেই।</li>';
+        }
+    });
+
+    // Listen for incoming invites
+    db.ref('invites/' + myPlayerId).on('value', snapshot => {
+        let invite = snapshot.val();
+        if (invite) {
+            document.getElementById('inviter-name').innerText = invite.sender;
+            document.getElementById('invite-modal').style.display = 'flex';
+            
+            document.getElementById('btn-accept-invite').onclick = () => {
+                document.getElementById('invite-modal').style.display = 'none';
+                db.ref('invites/' + myPlayerId).remove(); // Clear invite
+                joinRoomAsGuest(invite.roomId);
+            };
+            
+            document.getElementById('btn-decline-invite').onclick = () => {
+                document.getElementById('invite-modal').style.display = 'none';
+                db.ref('invites/' + myPlayerId).remove(); // Clear invite
+            };
+        } else {
+            document.getElementById('invite-modal').style.display = 'none';
+        }
+    });
+}
+
+let lobbyRoomListener = null;
+
+window.sendInvite = function(receiverId) {
+    if (!currentRoomId) {
+        let newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        currentRoomId = newRoomId;
+        myColor = 'green';
+        isOnlineMode = true;
+        
+        let initialGameState = {
+            currentPlayerIndex: 0,
+            tokenPositions: tokenPositions,
+            status: 'waiting'
+        };
+
+        // Create room first
+        db.ref('rooms/' + currentRoomId).set({
+            players: { green: true },
+            gameState: initialGameState
+        }).then(() => {
+            db.ref('rooms/' + currentRoomId + '/players/green').onDisconnect().remove();
+            
+            // Show Start button
+            document.getElementById('start-online-game-container').style.display = 'block';
+            
+            // Listen to players joining
+            lobbyRoomListener = db.ref('rooms/' + currentRoomId + '/players').on('value', snap => {
+                let p = snap.val();
+                if(p) {
+                    let count = Object.keys(p).length;
+                    document.getElementById('btn-start-online-game').innerText = `গেম শুরু করুন (${count}/4 জন যুক্ত)`;
+                }
+            });
+            sendSingleInvite(receiverId);
+        });
+    } else {
+        sendSingleInvite(receiverId);
+    }
+};
+
+function sendSingleInvite(receiverId) {
+    db.ref('invites/' + receiverId).set({
+        sender: myPlayerId,
+        roomId: currentRoomId,
+        timestamp: Date.now()
+    });
+    document.getElementById('lobby-status').innerText = `${receiverId} কে ইনভাইট পাঠানো হয়েছে...`;
+}
+
+// Host clicks Start Game
+document.getElementById('btn-start-online-game').onclick = () => {
+    if (lobbyRoomListener) {
+        db.ref('rooms/' + currentRoomId + '/players').off('value', lobbyRoomListener);
+    }
+    document.getElementById('start-online-game-container').style.display = 'none';
+    db.ref('rooms/' + currentRoomId + '/gameState').update({ status: 'playing' });
+    listenToRoom();
+};
+
+function joinRoomAsGuest(roomId) {
+    db.ref('rooms/' + roomId).once('value').then((snapshot) => {
+        if(snapshot.exists()) {
+            let data = snapshot.val();
+            let playersInRoom = Object.keys(data.players || {});
+            
+            if(playersInRoom.length >= 4) {
+                alert("রুমটি ভর্তি!");
+                return;
+            }
+            
+            let availableColors = ['green', 'yellow', 'blue', 'red'].filter(c => !playersInRoom.includes(c));
+            myColor = availableColors[0];
+            currentRoomId = roomId;
+            isOnlineMode = true;
+            
+            db.ref('rooms/' + currentRoomId + '/players/' + myColor).set(true).then(() => {
+                db.ref('rooms/' + currentRoomId + '/players/' + myColor).onDisconnect().remove();
+                
+                // Wait for host to start
+                document.getElementById('lobby-status').innerText = "হোস্ট গেম শুরু করার জন্য অপেক্ষা করুন...";
+                
+                db.ref('rooms/' + currentRoomId + '/gameState/status').on('value', snap => {
+                    if (snap.val() === 'playing') {
+                        db.ref('rooms/' + currentRoomId + '/gameState/status').off();
+                        listenToRoom();
+                    }
+                });
+            });
+        }
+    });
+}
+
+function listenToRoom() {
+    document.getElementById('online-lobby-menu').style.display = 'none';
+    document.getElementById('game-area').style.display = 'block';
+    
+    // Listen for players joining/leaving to update activePlayers
+    db.ref('rooms/' + currentRoomId + '/players').on('value', snap => {
+        let p = snap.val();
+        if(p) {
+            let currentOnlinePlayers = Object.keys(p);
+            
+            // Hide panels of inactive colors
+            players.forEach(c => {
+                if(!currentOnlinePlayers.includes(c)) {
+                    document.getElementById('panel-' + c).style.visibility = 'hidden';
+                } else {
+                    document.getElementById('panel-' + c).style.visibility = 'visible';
+                }
+            });
+            
+            if (currentOnlinePlayers.length > 1) {
+                hasGameStarted = true;
+            }
+            
+            if (hasGameStarted && currentOnlinePlayers.length === 1 && currentOnlinePlayers[0] === myColor) {
+                // Opponent left
+                showWinScreen(myColor, "বিপক্ষ খেলোয়াড় ডিসকানেক্ট হয়ে গেছে!");
+                db.ref('rooms/' + currentRoomId).remove(); // Cleanup room
+                return;
+            }
+            
+            activePlayers = currentOnlinePlayers;
+            updateAllTokenPositions();
+            updateTurnVisuals();
+        }
+    });
+
+    // Listen for turn changes and token movements
+    db.ref('rooms/' + currentRoomId + '/gameState').on('value', snap => {
+        let state = snap.val();
+        if(state) {
+            // Update token positions if they changed remotely
+            let changed = false;
+            players.forEach(c => {
+                if(state.tokenPositions[c]) {
+                    for(let i=0; i<4; i++) {
+                        if(tokenPositions[c][i] !== state.tokenPositions[c][i]) {
+                            tokenPositions[c][i] = state.tokenPositions[c][i];
+                            changed = true;
+                        }
+                    }
+                }
+            });
+            if(changed) updateAllTokenPositions();
+            
+            if(state.currentPlayerIndex !== undefined && state.currentPlayerIndex !== currentPlayerIndex) {
+                currentPlayerIndex = state.currentPlayerIndex;
+                updateTurnVisuals();
+            }
+        }
+    });
+
+    // Listen for remote dice rolls
+    db.ref('rooms/' + currentRoomId + '/lastRoll').on('value', snap => {
+        let roll = snap.val();
+        if(roll && roll.color !== myColor) { // Someone else rolled
+            gameState = 'rolling';
+            rollBtns[roll.color].classList.add('rolling', 'has-result');
+            dice3D[roll.color].style.transform = getDiceRotation(roll.value, roll.color);
+            
+            setTimeout(() => {
+                rollBtns[roll.color].classList.remove('rolling');
+                // The actual token movement sync happens via gameState tokenPositions
+            }, 1200);
+        }
+    });
+}
+
+

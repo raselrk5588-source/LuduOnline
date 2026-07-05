@@ -62,3 +62,11 @@
 2026-06-29 17:30:52 | HTTP 200 | {"referenceNo":"880186263613717827470529671089992","statusDetail":"Request was successfully processed.","version":"1.0","statusCode":"S1000"}
 2026-06-29 17:33:27 | HTTP 200 | {"referenceNo":"880186263613717827472085171090176","statusDetail":"Request was successfully processed.","version":"1.0","statusCode":"S1000"}
 2026-06-29 21:22:16 | HTTP 200 | {"referenceNo":"880186263613717827609371591117640","statusDetail":"Request was successfully processed.","version":"1.0","statusCode":"S1000"}
+2026-07-05 20:00:37 | HTTP 200 | {"statusDetail":"Sorry, Your phone number is blacklisted to use this application gamezone.","version":"1.0","statusCode":"E1342"}
+2026-07-05 20:02:35 | HTTP 200 | {"statusDetail":"user already registered","version":"1.0","statusCode":"E1351"}
+2026-07-05 20:03:52 | HTTP 200 | {"statusDetail":"user already registered","version":"1.0","statusCode":"E1351"}
+2026-07-05 20:04:00 | HTTP 200 | {"statusDetail":"user already registered","version":"1.0","statusCode":"E1351"}
+2026-07-05 20:05:21 | HTTP 200 | {"statusDetail":"user already registered","version":"1.0","statusCode":"E1351"}
+2026-07-05 20:05:33 | HTTP 200 | {"statusDetail":"user already registered","version":"1.0","statusCode":"E1351"}
+2026-07-05 20:06:50 | HTTP 200 | {"statusDetail":"user already registered","version":"1.0","statusCode":"E1351"}
+2026-07-05 20:07:09 | HTTP 200 | {"statusDetail":"user already registered","version":"1.0","statusCode":"E1351"}

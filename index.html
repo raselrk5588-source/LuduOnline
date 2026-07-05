@@ -3,315 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>খেলাঘর - গেম প্লাটফর্ম</title>
+    <title>খেলাঘর - বাংলাদেশের সেরা গেম প্ল্যাটফর্ম</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="hub-style.css">
+    <link rel="stylesheet" href="landing-style.css">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <meta name="theme-color" content="#10b981">
+    
+    <!-- Redirect to hub if already logged in -->
+    <script>
+        if (localStorage.getItem("isLoggedIn") === "true") {
+            window.location.href = "hub.html";
+        }
+    </script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo">খেলাঘর 🎮</div>
-        <div class="nav-links">
-            <a href="auth/login.html" class="nav-btn subscribe-btn" id="subscribeBtn">সাবস্ক্রাইব করুন</a>
-            <a href="#" class="nav-btn faq-btn" id="faqBtn">FAQ</a>
-            
-            <div class="profile-container" id="profileContainer" style="display: none;">
-                <div class="profile-icon" id="profileIcon">👤</div>
-                <div class="profile-dropdown" id="profileDropdown" style="display: none;">
-                    <div class="profile-phone" id="profilePhone"></div>
-                    <button class="unsubscribe-btn" id="unsubscribeBtn">আনসাবস্ক্রাইব করুন</button>
-                </div>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Custom Confirm Modal -->
-    <div class="custom-modal-overlay" id="customModalOverlay" style="display: none;">
-        <div class="custom-modal">
-            <h3 id="customModalTitle">নিশ্চিত করুন</h3>
-            <p id="customModalText">আপনি কি নিশ্চিত যে আপনি আনসাবস্ক্রাইব করতে চান?</p>
-            <div class="custom-modal-actions" id="customModalActions">
-                <button class="btn-cancel" id="customModalCancel">না</button>
-                <button class="btn-confirm" id="customModalConfirm">হ্যাঁ</button>
-            </div>
-        </div>
-    </div>
+<div class="landing-container">
     
-    <!-- FAQ Modal -->
-    <div class="custom-modal-overlay" id="faqModalOverlay" style="display: none;">
-        <div class="custom-modal faq-modal">
-            <h3>হেল্প এবং FAQ</h3>
-            
-            <div class="faq-content">
-                <div class="faq-section">
-                    <h4>কীভাবে সাবস্ক্রাইব করবেন?</h4>
-                    <p>১. অ্যাপের যেকোনো ফিচারে ক্লিক করলে লগইন স্ক্রিন আসবে।</p>
-                    <p>২. সেখানে আপনার রবি বা এয়ারটেল নম্বর দিন।</p>
-                    <p>৩. মোবাইলে আসা OTP কোডটি দিয়ে ভেরিফাই করলেই আপনার সাবস্ক্রিপশন চালু হয়ে যাবে।</p>
-                    <p class="charge-info">সাবস্ক্রিপশন চার্জ: ৪ টাকা/দিন (Vat+SC+SD)।</p>
-                </div>
-                
-                <div class="faq-section">
-                    <h4>কীভাবে আনসাবস্ক্রাইব করবেন?</h4>
-                    <p>১. উপরে ডানদিকের "প্রোফাইল" (User) আইকনে ক্লিক করুন।</p>
-                    <p>২. "আনসাবস্ক্রাইব করুন" বাটনে ক্লিক করে নিশ্চিত করুন।</p>
-                    <p>৩. সাথে সাথে আপনার সাবস্ক্রিপশন বাতিল হয়ে যাবে এবং কোনো চার্জ কাটা হবে না।</p>
-                </div>
+    <!-- LEFT SIDE: Promotional Content -->
+    <div class="left-pane">
+        <div class="badge">
+            <i class="fa-solid fa-fire" style="color: #fbbf24;"></i> আনলিমিটেড গেমিং মজা
+        </div>
+        
+        <h1 class="hero-title">দারুণ সব গেম খেলুন,<br>জীবন সাজান আনন্দে</h1>
+        <p class="hero-subtitle">অফলাইন ও অনলাইন মাল্টিপ্লেয়ার গেম • কোনো অ্যাড নেই • ব্রাউজারেই খেলুন</p>
+        
+        <div class="section-title">আমাদের গেমস</div>
+        <div class="landing-games">
+            <div class="landing-game-card">
+                <div class="lgc-thumb" style="background: #ffeb3b;">🎲</div>
+                <div class="lgc-title">লুডু মাস্টার</div>
+            </div>
+            <div class="landing-game-card">
+                <div class="lgc-thumb" style="background: #8bc34a;">🐱</div>
+                <div class="lgc-title">ভিলেজ রানার</div>
+            </div>
+            <div class="landing-game-card">
+                <div class="lgc-thumb" style="background: #2c3e50;">🚀</div>
+                <div class="lgc-title">স্পেস শুটার</div>
+            </div>
+        </div>
 
-                <div class="faq-section">
-                    <h4>সচরাচর জিজ্ঞাসা (FAQ)</h4>
-                    <p><strong>প্রশ্ন: অ্যাপটি কাদের জন্য?</strong></p>
-                    <p>উত্তর: এই 'খেলাঘর' প্ল্যাটফর্মটি সব বয়সী মানুষদের জন্য তৈরি করা হয়েছে, যেখানে সাবস্ক্রিপশনের মাধ্যমে আপনারা দারুণ সব থ্রিডি এবং টুডি গেম কোনো ডাউনলোড ছাড়াই সরাসরি উপভোগ করতে পারবেন।</p>
-                    
-                    <p class="mt-2"><strong>প্রশ্ন: আমার নম্বর কি নিরাপদ?</strong></p>
-                    <p>উত্তর: হ্যাঁ, আমরা BDApps এর অফিসিয়াল সিকিউর API ব্যবহার করি। আপনার নম্বর সম্পূর্ণ নিরাপদ।</p>
+        <div class="section-title">প্ল্যাটফর্মের সব সুবিধা</div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-dice" style="color: #e11d48; font-size: 24px;"></i>
+                লুডু মাস্টার
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-person-running" style="color: #10b981; font-size: 24px;"></i>
+                ভিলেজ রানার
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-earth-americas" style="color: #3b82f6; font-size: 24px;"></i>
+                অনলাইন মাল্টিপ্লেয়ার
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-robot" style="color: #8b5cf6; font-size: 24px;"></i>
+                স্মার্ট এআই রোবট
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-ban" style="color: #ef4444; font-size: 24px;"></i>
+                কোনো অ্যাড নেই
+            </div>
+        </div>
+
+        <div class="price-banner">
+            <div>
+                <div class="price-text">মাত্র ৫.৫৬ টাকা / দিন</div>
+                <div style="font-size: 13px; color: #166534; margin-top: 5px;">ভ্যাটসহ • যেকোনো সময় বাতিল করা যাবে</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div style="background: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 12px; border: 1px solid #ccc; color: #e11d48;">Robi</div>
+                <div style="background: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 12px; border: 1px solid #ccc; color: #ef4444;">Airtel</div>
+            </div>
+        </div>
+
+        <div class="section-title">ব্যবহারকারীদের কথা</div>
+        <div class="testimonials">
+            <div class="testi-card">
+                <div class="stars">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                "লুডু গেমটি অনেক সুন্দর! বন্ধুদের সাথে অনলাইনে খেলতে দারুণ মজা লাগে। কোনো বিরক্তিকর অ্যাড নেই।"
+                <div class="testi-user">
+                    <div class="testi-avatar">র</div>
+                    রহিম মিয়া
                 </div>
             </div>
-
-            <div class="custom-modal-actions mt-3">
-                <button class="btn-confirm" id="closeFaqBtn">বন্ধ করুন</button>
+            <div class="testi-card">
+                <div class="stars">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                "ভিলেজ রানার গেমটি আমার খুব প্রিয়। অ্যাপ ইন্সটল না করেই ব্রাউজারে খেলতে পারি, এটা খুব ভালো দিক।"
+                <div class="testi-user">
+                    <div class="testi-avatar" style="background:#3b82f6;">ক</div>
+                    করিম সাহেব
+                </div>
             </div>
         </div>
     </div>
-    <header class="hero">
-        <h1>আপনার প্রিয় গেমগুলো এক জায়গায়</h1>
-        <p>ব্রাউজারেই খেলুন দারুণ সব থ্রিডি এবং টুডি গেম, কোনো ডাউনলোডের ঝামেলা ছাড়াই!</p>
-    </header>
 
-    <!-- FEATURE CHIPS -->
-    <div class="feat-row">
-        <div class="feat"><span class="feat-ico">🤖</span> মজার ಗেমপ্লে</div>
-        <div class="feat"><span class="feat-ico">🎨</span> দারুণ গ্রাফিক্স</div>
-        <div class="feat"><span class="feat-ico">📴</span> ব্রাউজারে খেলুন</div>
-        <div class="feat"><span class="feat-ico">🏆</span> হাই স্কোর</div>
+    <!-- RIGHT SIDE: Auth/Subscription Content -->
+    <div class="right-pane">
+        <div class="auth-box">
+            <div class="auth-header">
+                <h2>সাবস্ক্রাইব করুন</h2>
+                <p>মোবাইল নম্বর দিয়ে শুরু করুন।<br>মাত্র ৫.৫৬ টাকায় পান সব সুবিধা।</p>
+            </div>
+
+            <div class="progress-steps">
+                <div class="step active">
+                    <div class="step-num">১</div> নম্বর দিন
+                </div>
+                <i class="fa-solid fa-chevron-right" style="margin-top:2px;"></i>
+                <div class="step">
+                    <div class="step-num">২</div> OTP যাচাই
+                </div>
+                <i class="fa-solid fa-chevron-right" style="margin-top:2px;"></i>
+                <div class="step">
+                    <div class="step-num">৩</div> শুরু করুন
+                </div>
+            </div>
+
+            <div class="benefit-list">
+                <div class="benefit-item"><i class="fa-solid fa-check"></i> থ্রিডি এবং টুডি গেম</div>
+                <div class="benefit-item"><i class="fa-solid fa-check"></i> ব্রাউজারে সরাসরি খেলার সুবিধা</div>
+                <div class="benefit-item"><i class="fa-solid fa-check"></i> ২৪/৭ নিরবচ্ছিন্ন গেমিং অভিজ্ঞতা</div>
+            </div>
+
+            <label class="input-label">মোবাইল নম্বর</label>
+            <div class="phone-input-group">
+                <div class="phone-prefix">BD +88</div>
+                <input type="tel" id="phone-input" class="phone-input" placeholder="01XXXXXXXXX">
+            </div>
+
+            <div class="charge-info">
+                <i class="fa-solid fa-circle-info"></i>
+                প্রতিদিন মাত্র ৫.৫৬ টাকা চার্জ (ভ্যাট + এসডি + এসসি সহ)। শুধুমাত্র রবি ও এয়ারটেল গ্রাহকদের জন্য।
+            </div>
+
+            <button id="auth-btn" class="btn-submit" onclick="handleLogin()">
+                সাবস্ক্রাইব করুন <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <div id="loader" style="display:none; text-align:center; color:#64748b; margin-top:10px; font-size:14px; font-weight:bold;">অপেক্ষা করুন...</div>
+
+            <div class="footer-credits">
+                © ২০২৬ খেলাঘর | RTSquad<br>
+                <div class="trust-badges">
+                    <span><i class="fa-solid fa-lock" style="color:#f59e0b;"></i> নিরাপদ</span>
+                    <span><i class="fa-solid fa-bolt" style="color:#3b82f6;"></i> তাৎক্ষণিক</span>
+                    <span><i class="fa-solid fa-mobile-screen" style="color:#10b981;"></i> রেস্পন্সিভ</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ROTATING TIPS -->
-    <div class="tip-bar">
-        <div class="tip-ico" id="tipIco">💡</div>
-        <div class="tip-text" id="tipText"><strong>খেলাঘর</strong> — সেরা গেমগুলো খেলুন কোনো ডাউনলোড ছাড়াই!</div>
-    </div>
+</div>
 
-    <main class="games-container">
-        <!-- Game Card 1 -->
-        <a href="games/village-runner/index.html" class="game-card">
-            <div class="game-thumbnail" style="background-color: #8bc34a; display:flex; justify-content:center; align-items:center;">
-                <div class="cat-icon">🐱</div>
-                <div class="play-icon">
-                    <svg viewBox="0 0 24 24" width="32" height="32" fill="white">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="game-info">
-                <h3>বিড়াল দৌড় 3D</h3>
-                <p>একটি দারুণ থ্রিডি এন্ডলেস রানার গেম যেখানে একটি কিউট বিড়াল গ্রামের রাস্তায় দৌড়ায়।</p>
-            </div>
-        </a>
+<script>
+    async function handleLogin() {
+        const phone = document.getElementById("phone-input").value.trim();
+        const btn = document.getElementById("auth-btn");
+        const loader = document.getElementById("loader");
 
-        <!-- Game Card 2 -->
-        <a href="games/ludo-master/index.html" class="game-card">
-            <div class="game-thumbnail" style="background-color: #ffeb3b; display:flex; justify-content:center; align-items:center;">
-                <div class="dice-icon">🎲</div>
-                <div class="play-icon">
-                    <svg viewBox="0 0 24 24" width="32" height="32" fill="white">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="game-info">
-                <h3>লুডু মাস্টার</h3>
-                <p>বন্ধুদের সাথে লোকাল মাল্টিপ্লেয়ারে লুডু খেলার মজা।</p>
-            </div>
-        </a>
+        const phoneRegex = /^01[3-9]\d{8}$/;
 
-        <!-- Game Card 3 -->
-        <a href="games/space-shooter/index.html" class="game-card">
-            <div class="game-thumbnail" style="background-color: #2c3e50; display:flex; justify-content:center; align-items:center;">
-                <div class="rocket-icon">🚀</div>
-                <div class="play-icon">
-                    <svg viewBox="0 0 24 24" width="32" height="32" fill="white">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="game-info">
-                <h3>স্পেস শুটার</h3>
-                <p>মহাকাশে এলিয়েনদের সাথে যুদ্ধ।</p>
-            </div>
-        </a>
-    </main>
+        if (!phoneRegex.test(phone)) {
+            alert("অনুগ্রহ করে সঠিক মোবাইল নাম্বার দিন।");
+            return;
+        }
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            
-            // Hide subscribe/faq buttons and show profile if logged in
-            if (isLoggedIn === 'true') {
-                const subBtn = document.getElementById('subscribeBtn');
-                const faqBtn = document.getElementById('faqBtn');
-                const profileContainer = document.getElementById('profileContainer');
-                const profilePhone = document.getElementById('profilePhone');
-                
-                if (subBtn) subBtn.style.display = 'none';
-                if (faqBtn) faqBtn.style.display = 'none';
-                if (profileContainer) {
-                    profileContainer.style.display = 'block';
-                    profilePhone.innerText = localStorage.getItem('phone') || 'Unknown Number';
-                }
-            }
+        // Demo number for testing
+        if (phone === "01700000000" || phone === "01800000000") {
+            localStorage.setItem("phone", phone);
+            localStorage.setItem("isLoggedIn", true);
+            window.location.href = "hub.html";
+            return;
+        }
 
-            // Profile dropdown toggle
-            const profileIcon = document.getElementById('profileIcon');
-            const profileDropdown = document.getElementById('profileDropdown');
-            if (profileIcon && profileDropdown) {
-                profileIcon.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    profileDropdown.style.display = profileDropdown.style.display === 'none' ? 'block' : 'none';
-                });
-                
-                // Hide dropdown when clicking outside
-                document.addEventListener('click', (e) => {
-                    if (!profileDropdown.contains(e.target) && e.target !== profileIcon) {
-                        profileDropdown.style.display = 'none';
-                    }
-                });
-            }
+        btn.disabled = true;
+        loader.style.display = "block";
 
-            // FAQ Modal Logic
-            const faqBtnLink = document.getElementById('faqBtn');
-            const faqModalOverlay = document.getElementById('faqModalOverlay');
-            const closeFaqBtn = document.getElementById('closeFaqBtn');
-            
-            if (faqBtnLink && faqModalOverlay) {
-                faqBtnLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    faqModalOverlay.style.display = 'flex';
-                });
-            }
-            if (closeFaqBtn) {
-                closeFaqBtn.addEventListener('click', () => {
-                    faqModalOverlay.style.display = 'none';
-                });
-            }
-            faqModalOverlay.addEventListener('click', (e) => {
-                if (e.target === faqModalOverlay) faqModalOverlay.style.display = 'none';
+        try {
+            const res = await fetch("auth/send_otp.php", {
+                method: "POST",
+                body: new URLSearchParams({ user_mobile: phone })
             });
 
-            // Custom Modal Logic
-            const modalOverlay = document.getElementById('customModalOverlay');
-            const modalTitle = document.getElementById('customModalTitle');
-            const modalText = document.getElementById('customModalText');
-            const btnCancel = document.getElementById('customModalCancel');
-            const btnConfirm = document.getElementById('customModalConfirm');
-            
-            function showCustomModal(title, text, showCancel, onConfirm) {
-                modalTitle.innerText = title;
-                modalText.innerText = text;
-                
-                if (showCancel) {
-                    btnCancel.style.display = 'inline-block';
-                    btnCancel.onclick = () => {
-                        modalOverlay.style.display = 'none';
-                    };
-                } else {
-                    btnCancel.style.display = 'none';
-                }
-                
-                btnConfirm.onclick = () => {
-                    modalOverlay.style.display = 'none';
-                    if (onConfirm) onConfirm();
-                };
-                
-                modalOverlay.style.display = 'flex';
+            const data = await res.json();
+
+            if (data.success) {
+                localStorage.setItem("phone", phone);
+                localStorage.setItem("ref", data.referenceNo);
+                window.location.href = "auth/otp.html";
+            } else if (
+                data.statusCode === 'E1351' || 
+                (data.statusDetail && data.statusDetail.toLowerCase().includes("already")) ||
+                (data.message && data.message.toLowerCase().includes("already"))
+            ) {
+                // User is already registered/subscribed, let them login automatically
+                localStorage.setItem("phone", phone);
+                localStorage.setItem("isLoggedIn", true);
+                window.location.href = "hub.html";
+            } else {
+                alert(data.message || "OTP failed. Try again.");
             }
 
-            // Unsubscribe action
-            const unsubscribeBtn = document.getElementById('unsubscribeBtn');
-            if (unsubscribeBtn) {
-                unsubscribeBtn.addEventListener('click', () => {
-                    const phone = localStorage.getItem('phone');
-                    if (!phone) return;
+        } catch (e) {
+            alert("Network error");
+        } finally {
+            btn.disabled = false;
+            loader.style.display = "none";
+        }
+    }
+</script>
 
-                    showCustomModal(
-                        'নিশ্চিত করুন',
-                        'আপনি কি নিশ্চিত যে আপনি আনসাবস্ক্রাইব করতে চান?',
-                        true,
-                        async () => {
-                            // Bypass for demo number
-                            if (phone === '01700000000') {
-                                localStorage.removeItem('isLoggedIn');
-                                localStorage.removeItem('phone');
-                                showCustomModal('সফল!', 'আনসাবস্ক্রাইব সফল হয়েছে।', false, () => {
-                                    window.location.reload();
-                                });
-                                return;
-                            }
-
-                            unsubscribeBtn.innerText = 'অপেক্ষা করুন...';
-                            unsubscribeBtn.disabled = true;
-
-                            try {
-                                const res = await fetch('auth/unsubscribe.php', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                                    body: new URLSearchParams({ user_mobile: phone })
-                                });
-                                const data = await res.json();
-                                
-                                if (data.success || data.subscriptionStatus === 'UNREGISTERED') {
-                                    localStorage.removeItem('isLoggedIn');
-                                    localStorage.removeItem('phone');
-                                    showCustomModal('সফল!', 'আনসাবস্ক্রাইব সফল হয়েছে।', false, () => {
-                                        window.location.reload();
-                                    });
-                                } else {
-                                    showCustomModal('ব্যর্থ!', data.error || 'আনসাবস্ক্রাইব করতে ব্যর্থ হয়েছে।', false);
-                                    unsubscribeBtn.innerText = 'আনসাবস্ক্রাইব করুন';
-                                    unsubscribeBtn.disabled = false;
-                                }
-                            } catch (e) {
-                                showCustomModal('সমস্যা!', 'নেটওয়ার্ক সমস্যা! আবার চেষ্টা করুন।', false);
-                                unsubscribeBtn.innerText = 'আনসাবস্ক্রাইব করুন';
-                                unsubscribeBtn.disabled = false;
-                            }
-                        }
-                    );
+<script>
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
                 });
-            }
-
-            const gameCards = document.querySelectorAll('.game-card');
-            gameCards.forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (isLoggedIn !== 'true') {
-                        e.preventDefault();
-                        window.location.href = 'auth/login.html';
-                    }
-                });
-            });
-
-            // Rotating tips logic
-            const TIPS = [
-                {ico:"🏃",html:"<strong>বিড়াল দৌড় 3D</strong> — কিউট বিড়াল নিয়ে গ্রামের রাস্তায় দৌড়াও, বাধা পেরিয়ে স্কোর গড়ো!"},
-                {ico:"🎲",html:"<strong>লুডু মাস্টার</strong> — বন্ধুদের সাথে লোকাল মাল্টিপ্লেয়ারে লুডু খেলার দারুণ মজা।"},
-                {ico:"🚀",html:"<strong>স্পেস শুটার</strong> — মহাকাশে এলিয়েনদের সাথে যুদ্ধ করো, বিশ্ব বাঁচাও!"},
-                {ico:"🏆",html:"<strong>হাই স্কোর</strong> — প্রতিদিন নতুন রেকর্ড গড়ো আর সবার সেরা হও।"},
-                {ico:"📴",html:"<strong>অফলাইন</strong> — ইন্টারনেট ছাড়াও ব্রাউজারে সহজে খেলা যায়।"}
-            ];
-            let tipIdx = 0;
-            const tipText = document.getElementById("tipText");
-            const tipIco = document.getElementById("tipIco");
-            
-            if (tipText && tipIco) {
-                setInterval(() => {
-                    tipIdx = (tipIdx + 1) % TIPS.length;
-                    tipText.style.animation = "none";
-                    void tipText.offsetWidth; // trigger reflow
-                    tipText.style.animation = "tipIn 0.5s ease";
-                    tipText.innerHTML = TIPS[tipIdx].html;
-                    tipIco.textContent = TIPS[tipIdx].ico;
-                }, 3200);
-            }
         });
-    </script>
+    }
+</script>
+
 </body>
 </html>

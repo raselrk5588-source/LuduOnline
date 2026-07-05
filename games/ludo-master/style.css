@@ -121,6 +121,13 @@ h1 {
     cursor: not-allowed;
 }
 
+/* Opponent's active turn */
+.player-panel.remote-turn {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 /* 3D Dice Styling */
 .dice-container-3d {
     width: 60px;
@@ -233,8 +240,11 @@ h1 {
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.8);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    padding-top: 80px;
+    padding-bottom: 20px;
+    overflow-y: auto;
     z-index: 1000;
     backdrop-filter: blur(5px);
 }
@@ -345,4 +355,13 @@ h1 {
     .face-5 { transform: rotateX(-90deg) translateZ(25px); }
     .dot { width: 10px; height: 10px; }
     .win-overlay h1 { font-size: 35px; }
+
+    /* Shrink fonts and modal paddings on mobile */
+    .mode-modal-content { padding: 20px 15px; }
+    .mode-modal-content h2 { font-size: 20px; margin-bottom: 15px; }
+    .mode-btn { padding: 10px; }
+    .mode-icon { font-size: 24px; }
+    .mode-btn strong { font-size: 16px; }
+    .mode-btn span:last-child { font-size: 12px; }
+    .modal-back-btn { padding: 8px 15px; font-size: 14px; }
 }

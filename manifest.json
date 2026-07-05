@@ -1,0 +1,17 @@
+{
+    "name": "খেলাঘর - Khelaghor",
+    "short_name": "খেলাঘর",
+    "description": "ব্রাউজারেই খেলুন দারুণ সব গেম!",
+    "start_url": "./hub.html",
+    "display": "standalone",
+    "background_color": "#10b981",
+    "theme_color": "#10b981",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

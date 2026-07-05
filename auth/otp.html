@@ -11,7 +11,7 @@
 <body>
     <div class="login-container">
         <div class="login-card">
-            <a href="../index.html" class="close-btn"><i class="fa-solid fa-xmark"></i></a>
+            <a href="../hub.html" class="close-btn"><i class="fa-solid fa-xmark"></i></a>
             
             <h1 class="logo">ওটিপি (OTP) দিন</h1>
             <p class="subtitle">আপনার মোবাইলে পাঠানো ৪ ডিজিটের কোডটি দিন</p>
@@ -51,7 +51,7 @@
 
           if (data.statusCode === "S1000") {
             localStorage.setItem("isLoggedIn", true);
-            window.location.href = "../index.html";
+            window.location.href = "../hub.html";
           } else {
             alert(data.message || "OTP ভুল");
           }
