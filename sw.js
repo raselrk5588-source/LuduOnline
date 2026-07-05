@@ -1,7 +1,6 @@
-const CACHE_NAME = 'khelaghor-pwa-v3';
+const CACHE_NAME = 'khelaghor-pwa-v4';
 const ASSETS_TO_CACHE = [
     './',
-    './index.html',
     './index.html',
     './landing-style.css',
     './hub-style.css',
