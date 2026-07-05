@@ -549,7 +549,8 @@
             }
 
         } catch (e) {
-            alert("Network error");
+            console.error("Fetch error:", e);
+            alert("Error: " + e.message);
         } finally {
             btn.disabled = false;
             loader.style.display = "none";
