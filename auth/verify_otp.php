@@ -37,16 +37,14 @@ $config = include 'config.php';
 
 $requestData = array(
     "applicationId" => $config['applicationId'],
-    // Password is removed; proxy server will inject it from DB
+    "password" => $config['password'],
     "referenceNo" => $referenceNo,
     "otp" => $user_otp
 );
 
 $requestJson = json_encode($requestData);
 
-// Update this to your main server domain/IP where the proxy is hosted.
-// E.g., https://your-main-server.com/api/bdapps/proxy
-$url = "https://portal.rtsquad.com/api/bdapps/proxy"; // You will need to change this to the real server domain/IP
+$url = "https://developer.bdapps.com/subscription/otp/verify";
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_POST, true);
@@ -54,8 +52,7 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $requestJson);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
     "Content-Type: application/json",
-    "Content-Length: " . strlen($requestJson),
-    "X-Target-URL: https://developer.bdapps.com/subscription/otp/verify"
+    "Content-Length: " . strlen($requestJson)
 ));
 curl_setopt($ch, CURLOPT_TIMEOUT, 15);
 
