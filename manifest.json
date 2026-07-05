@@ -2,7 +2,7 @@
     "name": "গেমআড্ডা - GameAdda",
     "short_name": "গেমআড্ডা",
     "description": "ব্রাউজারেই খেলুন দারুণ সব গেম!",
-    "start_url": "./hub.html",
+    "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#10b981",
     "theme_color": "#10b981",

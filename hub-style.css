@@ -4,10 +4,14 @@
     box-sizing: border-box;
 }
 
-body {
+body.hub-mode {
     font-family: 'Hind Siliguri', sans-serif;
     background-color: #f4f7f6;
     color: #333;
+    display: block;
+    padding: 0;
+    min-height: auto;
+    animation: none;
 }
 
 .navbar {

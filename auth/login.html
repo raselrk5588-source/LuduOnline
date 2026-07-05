@@ -13,7 +13,7 @@
 <body>
   <div class="login-container">
     <div class="login-card">
-      <a href="../hub.html" class="close-btn"><i class="fa-solid fa-xmark"></i></a>
+      <a href="../index.html" class="close-btn"><i class="fa-solid fa-xmark"></i></a>
 
       <h1 class="logo">লগইন করুন</h1>
       <p class="subtitle">সাবস্ক্রিপশন করতে আপনার রবি/এয়ারটেল নম্বর দিন। চার্জ:<br>৪ টাকা/দিন (Vat+SC+SD)</p>
@@ -45,7 +45,7 @@
       if (phone === "01700000000" || phone === "01800000000") {
         localStorage.setItem("phone", phone);
         localStorage.setItem("isLoggedIn", true);
-        window.location.href = "../hub.html";
+        window.location.href = "../index.html";
         return;
       }
 

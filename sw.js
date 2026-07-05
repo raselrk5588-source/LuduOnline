@@ -2,7 +2,7 @@ const CACHE_NAME = 'khelaghor-pwa-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './hub.html',
+    './index.html',
     './landing-style.css',
     './hub-style.css',
     './icon.svg',
@@ -73,7 +73,7 @@ self.addEventListener('fetch', event => {
                 );
             }).catch(() => {
                 // If network fails and it's an HTML page, maybe show an offline page
-                // But for this PWA, we'll just let it fail or return cached hub.html if possible
+                // But for this PWA, we'll just let it fail or return cached index.html if possible
             })
     );
 });
