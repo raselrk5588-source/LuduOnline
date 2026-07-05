@@ -586,7 +586,8 @@ function joinLobby() {
         
         let count = 0;
         for (let pid in players) {
-            if (pid !== myPlayerId && players[pid] !== 'playing') {
+            let inviteStatus = window.sentInvites && window.sentInvites[pid] ? window.sentInvites[pid] : '';
+            if (pid !== myPlayerId && (players[pid] !== 'playing' || inviteStatus)) {
                 count++;
                 let li = document.createElement('li');
                 li.style.display = 'flex';
@@ -594,7 +595,6 @@ function joinLobby() {
                 li.style.alignItems = 'center';
                 li.style.padding = '8px';
                 li.style.borderBottom = '1px solid #eee';
-                let inviteStatus = window.sentInvites && window.sentInvites[pid] ? window.sentInvites[pid] : '';
                 let btnStyle = 'background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;';
                 let btnText = 'ইনভাইট';
                 let disabled = '';
