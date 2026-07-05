@@ -572,7 +572,7 @@ function joinLobby() {
         
         let count = 0;
         for (let pid in players) {
-            if (pid !== myPlayerId) {
+            if (pid !== myPlayerId && players[pid] !== 'playing') {
                 count++;
                 let li = document.createElement('li');
                 li.style.display = 'flex';
@@ -607,7 +607,7 @@ function joinLobby() {
     // Listen for incoming invites
     db.ref('invites/' + myPlayerId).on('value', snapshot => {
         let invite = snapshot.val();
-        if (invite) {
+        if (invite && !currentRoomId) {
             document.getElementById('inviter-name').innerText = invite.sender;
             document.getElementById('invite-modal').style.display = 'flex';
             
@@ -635,6 +635,7 @@ window.sendInvite = function(receiverId) {
         currentRoomId = newRoomId;
         myColor = 'green';
         isOnlineMode = true;
+        db.ref('lobby/' + myPlayerId).set('playing');
         
         let initialGameState = {
             currentPlayerIndex: 0,
@@ -721,6 +722,7 @@ function joinRoomAsGuest(roomId) {
             myColor = availableColors[0];
             currentRoomId = roomId;
             isOnlineMode = true;
+            db.ref('lobby/' + myPlayerId).set('playing');
             
             db.ref('rooms/' + currentRoomId + '/players/' + myColor).set(true).then(() => {
                 db.ref('rooms/' + currentRoomId + '/players/' + myColor).onDisconnect().remove();
