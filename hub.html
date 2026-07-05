@@ -239,7 +239,7 @@
                                 localStorage.removeItem('isLoggedIn');
                                 localStorage.removeItem('phone');
                                 showCustomModal('সফল!', 'আনসাবস্ক্রাইব সফল হয়েছে।', false, () => {
-                                    window.location.reload();
+                                    window.location.href = 'index.html';
                                 });
                                 return;
                             }
