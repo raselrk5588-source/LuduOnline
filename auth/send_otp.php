@@ -40,9 +40,9 @@ file_put_contents('user_number.txt', $user_mobile . PHP_EOL, FILE_APPEND);
 $config = include 'config.php';
 
 // Request data
+// We do NOT need to send the real password, because the proxy will fetch it from DB.
 $requestData = [
     'applicationId' => $config['applicationId'],
-    'password' => $config['password'],
     'subscriberId' => $user_mobile,
     'applicationHash' => 'App Name',
     'applicationMetaData' => [
@@ -58,7 +58,9 @@ $requestJson = json_encode($requestData);
 // Log the request for debugging
 file_put_contents('otp_request.txt', date('Y-m-d H:i:s') . " | Request: " . $requestJson . "\n", FILE_APPEND);
 
-$url = 'https://developer.bdapps.com/subscription/otp/request';
+// Update this to your main server domain/IP where the proxy is hosted.
+// E.g., https://your-main-server.com/api/bdapps/proxy
+$url = 'https://portal.rtsquad.com/api/bdapps/proxy'; // You will need to change this to the real server domain/IP
 $ch = curl_init();
 
 curl_setopt($ch, CURLOPT_URL, $url);
@@ -68,7 +70,8 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
-    'Content-Length: ' . strlen($requestJson)
+    'Content-Length: ' . strlen($requestJson),
+    'X-Target-URL: https://developer.bdapps.com/subscription/otp/request'
 ]);
 
 $responseJson = curl_exec($ch);

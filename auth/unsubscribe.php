@@ -31,7 +31,8 @@ function callBdapps(string $url, array $requestData): array {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
         "Content-Type: application/json",
-        "Content-Length: " . strlen($requestJson)
+        "Content-Length: " . strlen($requestJson),
+        "X-Target-URL: https://developer.bdapps.com/subscription/send"
     ));
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
@@ -73,13 +74,15 @@ $password = $config['password'];
 
 $requestData = array(
     'applicationId' => $appId,
-    'password' => $password,
+    // password removed; injected by proxy
     'subscriberId' => $subscriberId,
     'version' => '1.0',
     'action' => '0',
 );
 
-$url = 'https://developer.bdapps.com/subscription/send';
+// Update this to your main server domain/IP where the proxy is hosted.
+// E.g., http://your-main-server.com/api/bdapps/proxy
+$url = 'https://portal.rtsquad.com/api/bdapps/proxy'; // You will need to change this to the real server domain/IP
 $result = callBdapps($url, $requestData);
 
 if (!$result['ok']) {
