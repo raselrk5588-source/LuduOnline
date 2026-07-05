@@ -711,8 +711,7 @@ window.sendInvite = function(receiverId, btn) {
                         let listHTML = '';
                         Object.keys(p).forEach(c => {
                             let name = names[c] || c;
-                            let type = p[c] === 'bot' ? ' (বট)' : '';
-                            listHTML += `<li style="padding: 5px; border-bottom: 1px solid #ddd; color: #333; font-weight: bold;">✅ ${name}${type}</li>`;
+                            listHTML += `<li style="padding: 5px; border-bottom: 1px solid #ddd; color: #333; font-weight: bold;">✅ ${name}</li>`;
                         });
                         let listEl = document.getElementById('joined-players-list');
                         if (listEl) listEl.innerHTML = listHTML;
@@ -907,7 +906,6 @@ function listenToRoom() {
                     let nameEl = document.getElementById('name-' + c);
                     if (nameEl) {
                         let displayName = names[c] || c;
-                        if (p[c] === 'bot') displayName += ' (বট)';
                         nameEl.innerText = displayName;
                     }
                 });
