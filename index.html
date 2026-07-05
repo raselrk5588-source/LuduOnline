@@ -300,22 +300,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            
-            // Hide subscribe/faq buttons and show profile if logged in
-            if (isLoggedIn === 'true') {
-                const subBtn = document.getElementById('subscribeBtn');
-                const faqBtn = document.getElementById('faqBtn');
-                const profileContainer = document.getElementById('profileContainer');
-                const profilePhone = document.getElementById('profilePhone');
-                
-                if (subBtn) subBtn.style.display = 'none';
-                if (faqBtn) faqBtn.style.display = 'none';
-                if (profileContainer) {
-                    profileContainer.style.display = 'block';
-                    profilePhone.innerText = localStorage.getItem('phone') || 'Unknown Number';
-                }
-            }
 
             // Profile dropdown toggle
             const profileIcon = document.getElementById('profileIcon');
@@ -476,18 +460,31 @@
         function updateUIVisibility() {
             const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
             document.getElementById('pageLoader').style.display = 'none';
+            
+            const subBtn = document.getElementById('subscribeBtn');
+            const faqBtn = document.getElementById('faqBtn');
+            const profileContainer = document.getElementById('profileContainer');
+            const profilePhone = document.getElementById('profilePhone');
+
             if (isLoggedIn) {
                 document.getElementById('landing-ui').style.display = 'none';
                 document.getElementById('hub-ui').style.display = 'block';
                 document.body.classList.add('hub-mode');
                 
-                // Initialize hub logic (update profile name)
-                const profilePhone = document.getElementById('profilePhone');
-                if(profilePhone) profilePhone.innerText = localStorage.getItem('phone') || 'Unknown Number';
+                if (subBtn) subBtn.style.display = 'none';
+                if (faqBtn) faqBtn.style.display = 'none';
+                if (profileContainer) {
+                    profileContainer.style.display = 'block';
+                    if (profilePhone) profilePhone.innerText = localStorage.getItem('phone') || 'Unknown Number';
+                }
             } else {
-                document.getElementById('landing-ui').style.display = 'block'; // Or flex, let's just leave it, landing-container has its own layout
+                document.getElementById('landing-ui').style.display = 'block';
                 document.getElementById('hub-ui').style.display = 'none';
                 document.body.classList.remove('hub-mode');
+                
+                if (subBtn) subBtn.style.display = 'inline-block';
+                if (faqBtn) faqBtn.style.display = 'inline-block';
+                if (profileContainer) profileContainer.style.display = 'none';
             }
         }
 
