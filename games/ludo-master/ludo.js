@@ -460,7 +460,7 @@ players.forEach(color => {
     rollBtns[color].addEventListener('click', () => {
         if (!isBot[color]) {
             if(isOnlineMode && color !== myColor) {
-                alert("এটি আপনার চাল নয়!");
+                showWrongTurn();
                 return;
             }
             rollDice(color);
@@ -470,6 +470,30 @@ players.forEach(color => {
 
 createTokens();
 dice3D['green'].style.transform = 'translateZ(-30px) rotateX(0deg) rotateY(0deg)';
+
+function showWrongTurn() {
+    let popup = document.getElementById('wrong-turn-popup');
+    if (popup) {
+        popup.style.display = 'block';
+        
+        // Remove animation and force reflow to allow re-triggering animation on consecutive clicks
+        popup.style.animation = 'none';
+        popup.offsetHeight; 
+        popup.style.animation = 'wrongShake 0.4s';
+        
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop previous if spamming
+            let msg = new SpeechSynthesisUtterance("No no no");
+            msg.rate = 1.3;
+            msg.pitch = 1.2;
+            window.speechSynthesis.speak(msg);
+        }
+        
+        setTimeout(() => {
+            popup.style.display = 'none';
+        }, 1500);
+    }
+}
 
 // Mode selection logic
 document.getElementById('btn-manual').onclick = () => {
