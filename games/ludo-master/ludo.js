@@ -755,6 +755,17 @@ function sendSingleInvite(receiverId, btn) {
                         btn.innerText = 'যুক্ত হয়েছে';
                         btn.style.backgroundColor = '#4CAF50';
                     }
+                } else {
+                    document.getElementById('lobby-status').innerText = 'রুম ফুল হয়ে গেছে!';
+                    if (btn) {
+                        btn.innerText = 'রুম ফুল';
+                        btn.style.backgroundColor = '#f44336';
+                        setTimeout(() => {
+                            btn.innerText = 'ইনভাইট';
+                            btn.style.backgroundColor = '#2196F3';
+                            btn.disabled = false;
+                        }, 2000);
+                    }
                 }
             });
         }, 1000);
@@ -845,6 +856,10 @@ function joinRoomAsGuest(roomId) {
             db.ref('rooms/' + currentRoomId + '/players/' + myColor).set(true).then(() => {
                 db.ref('rooms/' + currentRoomId + '/names/' + myColor).set(myPlayerId);
                 db.ref('rooms/' + currentRoomId + '/players/' + myColor).onDisconnect().remove();
+                
+                // Hide invite section so guest cannot invite others
+                let inviteSection = document.getElementById('invite-section');
+                if (inviteSection) inviteSection.style.display = 'none';
                 
                 // Wait for host to start
                 document.getElementById('lobby-status').innerText = "হোস্ট গেম শুরু করার জন্য অপেক্ষা করুন...";
