@@ -673,7 +673,7 @@ function joinLobby() {
     // Listen for incoming invites
     db.ref('invites/' + myPlayerId).on('value', snapshot => {
         let invite = snapshot.val();
-        if (invite && !currentRoomId) {
+        if (invite && invite.status === 'pending' && !currentRoomId) {
             document.getElementById('inviter-name').innerText = invite.sender;
             document.getElementById('invite-modal').style.display = 'flex';
             
@@ -778,6 +778,8 @@ function sendSingleInvite(receiverId, btn) {
                     if (btn) {
                         btn.innerText = 'যুক্ত হয়েছে';
                         btn.style.backgroundColor = '#4CAF50';
+                        btn.disabled = true;
+                        btn.style.cursor = 'not-allowed';
                     }
                 } else {
                     document.getElementById('lobby-status').innerText = 'রুম ফুল হয়ে গেছে!';
@@ -836,6 +838,8 @@ function sendSingleInvite(receiverId, btn) {
             if (currentBtn) {
                 currentBtn.innerText = 'যুক্ত হয়েছে';
                 currentBtn.style.backgroundColor = '#4CAF50';
+                currentBtn.disabled = true;
+                currentBtn.style.cursor = 'not-allowed';
             }
             inviteRef.off('value', listener);
         }
