@@ -38,13 +38,16 @@ $config = include 'config.php';
 $requestData = [
     'version' => '1.0',
     'applicationId' => $config['applicationId'],
-    'password' => $config['password'],
+    // password removed; injected by proxy
     'subscriberId' => $subscriberId,
 ];
 
 $requestJson = json_encode($requestData);
 
-$url = 'https://developer.bdapps.com/subscription/getStatus';
+// BDApps subscription status API via Proxy
+// Update this to your main server domain/IP where the proxy is hosted.
+// E.g., http://your-main-server.com/api/bdapps/proxy
+$url = 'https://portal.rtsquad.com/api/bdapps/proxy'; // You will need to change this to the real server domain/IP
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_POST, true);
@@ -53,7 +56,8 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
-    'Content-Length: ' . strlen($requestJson)
+    'Content-Length: ' . strlen($requestJson),
+    'X-Target-URL: https://developer.bdapps.com/subscription/getStatus'
 ]);
 
 $responseJson = curl_exec($ch);
