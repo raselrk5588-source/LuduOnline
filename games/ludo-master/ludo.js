@@ -474,6 +474,11 @@ dice3D['green'].style.transform = 'translateZ(-30px) rotateX(0deg) rotateY(0deg)
 // Mode selection logic
 document.getElementById('btn-manual').onclick = () => {
     activePlayers = ['green', 'yellow', 'blue', 'red'];
+    document.getElementById('name-green').innerText = "খেলোয়াড় ১";
+    document.getElementById('name-yellow').innerText = "খেলোয়াড় ২";
+    document.getElementById('name-blue').innerText = "খেলোয়াড় ৩";
+    document.getElementById('name-red').innerText = "খেলোয়াড় ৪";
+    
     document.getElementById('start-menu').style.display = 'none';
     document.getElementById('game-area').style.display = 'block';
     updateTurnVisuals();
@@ -482,6 +487,11 @@ document.getElementById('btn-manual').onclick = () => {
 document.getElementById('btn-robot').onclick = () => {
     activePlayers = ['green', 'blue'];
     isBot['blue'] = true;
+    
+    document.getElementById('name-green').innerText = "আপনি";
+    document.getElementById('name-blue').innerText = "রোবট";
+    document.getElementById('name-yellow').innerText = "";
+    document.getElementById('name-red').innerText = "";
     
     // Hide inactive panels
     document.getElementById('panel-yellow').style.visibility = 'hidden';
@@ -883,9 +893,24 @@ function listenToRoom() {
             players.forEach(c => {
                 if(!currentOnlinePlayers.includes(c)) {
                     document.getElementById('panel-' + c).style.visibility = 'hidden';
+                    let nameEl = document.getElementById('name-' + c);
+                    if (nameEl) nameEl.innerText = '';
                 } else {
                     document.getElementById('panel-' + c).style.visibility = 'visible';
                 }
+            });
+            
+            // Sync player names to the board
+            db.ref('rooms/' + currentRoomId + '/names').once('value').then(nameSnap => {
+                let names = nameSnap.val() || {};
+                currentOnlinePlayers.forEach(c => {
+                    let nameEl = document.getElementById('name-' + c);
+                    if (nameEl) {
+                        let displayName = names[c] || c;
+                        if (p[c] === 'bot') displayName += ' (বট)';
+                        nameEl.innerText = displayName;
+                    }
+                });
             });
             
             if (currentOnlinePlayers.length > 1) {
