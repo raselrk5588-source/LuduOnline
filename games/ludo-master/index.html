@@ -10,6 +10,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <link rel="stylesheet" href="style.css?v=3">
+    <script>
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = '../../index.html';
+        }
+    </script>
 </head>
 <body>
     <div class="container">
