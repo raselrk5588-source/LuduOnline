@@ -247,12 +247,20 @@ function evaluateValidMoves(color, diceValue) {
 }
 
 function setupTokenClicks(color, validMoves, diceValue) {
-    gameState = 'waiting_for_move';
-    validMoves.forEach(i => {
-        let el = document.getElementById(`${color}-${i}`);
-        el.classList.add('clickable');
-        el.onclick = () => moveToken(color, i, diceValue);
-    });
+    let allValidAreInBase = validMoves.every(i => tokenPositions[color][i] === -1);
+    
+    if (validMoves.length === 1 || (allValidAreInBase && validMoves.length > 0)) {
+        // Auto move if there is only one choice, or if all choices are just deploying a new token (which are identical)
+        gameState = 'moving';
+        setTimeout(() => moveToken(color, validMoves[0], diceValue), 300);
+    } else {
+        gameState = 'waiting_for_move';
+        validMoves.forEach(i => {
+            let el = document.getElementById(`${color}-${i}`);
+            el.classList.add('clickable');
+            el.onclick = () => moveToken(color, i, diceValue);
+        });
+    }
 }
 
 function moveToken(color, i, diceValue) {
