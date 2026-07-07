@@ -790,8 +790,12 @@ function sendSingleInvite(receiverId, btn) {
                     if (availableColors.length > 0) {
                         let botColor = availableColors[0];
                         isBot[botColor] = true;
-                        db.ref('rooms/' + currentRoomId + '/players/' + botColor).set('bot'); // Save as 'bot' instead of true
-                        db.ref('rooms/' + currentRoomId + '/names/' + botColor).set(receiverId);
+                        
+                        // Set name first, then player to avoid race condition where color name is shown
+                        db.ref('rooms/' + currentRoomId + '/names/' + botColor).set(receiverId).then(() => {
+                            db.ref('rooms/' + currentRoomId + '/players/' + botColor).set('bot'); // Save as 'bot' instead of true
+                        });
+
                         document.getElementById('lobby-status').innerText = `${receiverId} রুমে জয়েন করেছে!`;
                         
                         window.sentInvites[receiverId] = 'accepted';
@@ -903,26 +907,27 @@ function joinRoomAsGuest(roomId) {
             isOnlineMode = true;
             db.ref('lobby/' + myPlayerId).set('playing');
             
-            db.ref('rooms/' + currentRoomId + '/players/' + myColor).set(true).then(() => {
-                db.ref('rooms/' + currentRoomId + '/names/' + myColor).set(myPlayerId);
-                db.ref('rooms/' + currentRoomId + '/players/' + myColor).onDisconnect().remove();
-                
-                // Hide invite section so guest cannot invite others
-                let inviteSection = document.getElementById('invite-section');
-                if (inviteSection) inviteSection.style.display = 'none';
-                
-                // Wait for host to start
-                document.getElementById('lobby-status').innerText = "হোস্ট গেম শুরু করার জন্য অপেক্ষা করুন...";
-                
-                db.ref('rooms/' + currentRoomId + '/gameState/status').on('value', snap => {
-                    if (snap.val() === null) {
-                        db.ref('rooms/' + currentRoomId + '/gameState/status').off();
-                        alert('হোস্ট রুমটি বন্ধ করে দিয়েছেন!');
-                        location.reload();
-                    } else if (snap.val() === 'playing') {
-                        db.ref('rooms/' + currentRoomId + '/gameState/status').off();
-                        listenToRoom();
-                    }
+            db.ref('rooms/' + currentRoomId + '/names/' + myColor).set(myPlayerId).then(() => {
+                db.ref('rooms/' + currentRoomId + '/players/' + myColor).set(true).then(() => {
+                    db.ref('rooms/' + currentRoomId + '/players/' + myColor).onDisconnect().remove();
+                    
+                    // Hide invite section so guest cannot invite others
+                    let inviteSection = document.getElementById('invite-section');
+                    if (inviteSection) inviteSection.style.display = 'none';
+                    
+                    // Wait for host to start
+                    document.getElementById('lobby-status').innerText = "হোস্ট গেম শুরু করার জন্য অপেক্ষা করুন...";
+                    
+                    db.ref('rooms/' + currentRoomId + '/gameState/status').on('value', snap => {
+                        if (snap.val() === null) {
+                            db.ref('rooms/' + currentRoomId + '/gameState/status').off();
+                            alert('হোস্ট রুমটি বন্ধ করে দিয়েছেন!');
+                            location.reload();
+                        } else if (snap.val() === 'playing') {
+                            db.ref('rooms/' + currentRoomId + '/gameState/status').off();
+                            listenToRoom();
+                        }
+                    });
                 });
             });
         }
