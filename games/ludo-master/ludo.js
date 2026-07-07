@@ -736,6 +736,17 @@ window.sendInvite = function(receiverId, btn) {
                         Object.keys(p).forEach(c => {
                             let name = names[c] || c;
                             listHTML += `<li style="padding: 5px; border-bottom: 1px solid #ddd; color: #333; font-weight: bold;">✅ ${name}</li>`;
+                            
+                            // Automatically disable the invite button if they are in the room
+                            if (!window.sentInvites) window.sentInvites = {};
+                            window.sentInvites[name] = 'accepted';
+                            let domBtn = document.getElementById('invite-btn-' + name);
+                            if (domBtn) {
+                                domBtn.innerText = 'যুক্ত হয়েছে';
+                                domBtn.style.backgroundColor = '#4CAF50';
+                                domBtn.disabled = true;
+                                domBtn.style.cursor = 'not-allowed';
+                            }
                         });
                         let listEl = document.getElementById('joined-players-list');
                         if (listEl) listEl.innerHTML = listHTML;
@@ -756,43 +767,54 @@ function sendSingleInvite(receiverId, btn) {
         btn.disabled = true;
     }
 
+    if (!window.sentInvites) window.sentInvites = {};
+    window.sentInvites[receiverId] = 'pending';
+
     const isAiBot = ['আকাশ', 'সুমাইয়া', 'সাদিয়া', 'নয়ন'].includes(receiverId);
     if (isAiBot) {
         document.getElementById('lobby-status').innerText = `${receiverId} ইনভাইট গ্রহণ করছে...`;
         setTimeout(() => {
-            // Find available color
-            db.ref('rooms/' + currentRoomId + '/players').once('value').then(snap => {
-                let p = snap.val() || {};
-                let currentOnline = Object.keys(p);
-                let availableColors = ['green', 'blue', 'yellow', 'red'].filter(c => !currentOnline.includes(c));
-                if (availableColors.length > 0) {
-                    let botColor = availableColors[0];
-                    isBot[botColor] = true;
-                    db.ref('rooms/' + currentRoomId + '/players/' + botColor).set('bot'); // Save as 'bot' instead of true
-                    db.ref('rooms/' + currentRoomId + '/names/' + botColor).set(receiverId);
-                    document.getElementById('lobby-status').innerText = `${receiverId} রুমে জয়েন করেছে!`;
-                    
-                    if (!window.sentInvites) window.sentInvites = {};
+            // Check if bot is already in the room
+            db.ref('rooms/' + currentRoomId + '/names').once('value').then(namesSnap => {
+                let names = namesSnap.val() || {};
+                if (Object.values(names).includes(receiverId)) {
                     window.sentInvites[receiverId] = 'accepted';
-                    
-                    if (btn) {
-                        btn.innerText = 'যুক্ত হয়েছে';
-                        btn.style.backgroundColor = '#4CAF50';
-                        btn.disabled = true;
-                        btn.style.cursor = 'not-allowed';
-                    }
-                } else {
-                    document.getElementById('lobby-status').innerText = 'রুম ফুল হয়ে গেছে!';
-                    if (btn) {
-                        btn.innerText = 'রুম ফুল';
-                        btn.style.backgroundColor = '#f44336';
-                        setTimeout(() => {
-                            btn.innerText = 'ইনভাইট';
-                            btn.style.backgroundColor = '#2196F3';
-                            btn.disabled = false;
-                        }, 2000);
-                    }
+                    return; // Already joined
                 }
+                
+                // Find available color
+                db.ref('rooms/' + currentRoomId + '/players').once('value').then(snap => {
+                    let p = snap.val() || {};
+                    let currentOnline = Object.keys(p);
+                    let availableColors = ['green', 'blue', 'yellow', 'red'].filter(c => !currentOnline.includes(c));
+                    if (availableColors.length > 0) {
+                        let botColor = availableColors[0];
+                        isBot[botColor] = true;
+                        db.ref('rooms/' + currentRoomId + '/players/' + botColor).set('bot'); // Save as 'bot' instead of true
+                        db.ref('rooms/' + currentRoomId + '/names/' + botColor).set(receiverId);
+                        document.getElementById('lobby-status').innerText = `${receiverId} রুমে জয়েন করেছে!`;
+                        
+                        window.sentInvites[receiverId] = 'accepted';
+                        
+                        if (btn) {
+                            btn.innerText = 'যুক্ত হয়েছে';
+                            btn.style.backgroundColor = '#4CAF50';
+                            btn.disabled = true;
+                            btn.style.cursor = 'not-allowed';
+                        }
+                    } else {
+                        document.getElementById('lobby-status').innerText = 'রুম ফুল হয়ে গেছে!';
+                        if (btn) {
+                            btn.innerText = 'রুম ফুল';
+                            btn.style.backgroundColor = '#f44336';
+                            setTimeout(() => {
+                                btn.innerText = 'ইনভাইট';
+                                btn.style.backgroundColor = '#2196F3';
+                                btn.disabled = false;
+                            }, 2000);
+                        }
+                    }
+                });
             });
         }, 1000);
         return;
