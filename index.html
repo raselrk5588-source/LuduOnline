@@ -32,6 +32,13 @@
         <h1 class="hero-title">দারুণ সব গেম খেলুন,<br>জীবন সাজান আনন্দে</h1>
         <p class="hero-subtitle">অফলাইন ও অনলাইন মাল্টিপ্লেয়ার গেম • কোনো অ্যাড নেই • ব্রাউজারেই খেলুন</p>
         
+        <div class="section-title">গেমপ্লে স্ন্যাপশট (Ludo Master)</div>
+        <div class="screenshot-gallery hide-scrollbar">
+            <img src="assets/ludo_ss1.png" alt="Ludo Game Splash Screen">
+            <img src="assets/ludo_ss2.png" alt="Ludo Home Screen">
+            <img src="assets/ludo_ss3.png" alt="Ludo Online Lobby">
+        </div>
+        
         <div class="section-title">আমাদের গেমস</div>
         <div class="landing-games">
             <div class="landing-game-card">
@@ -524,8 +531,11 @@
         loader.style.display = "block";
 
         try {
-            const res = await fetch("auth/send_otp.php", {
+            const res = await fetch("/auth/send_otp.php", {
                 method: "POST",
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
                 body: new URLSearchParams({ user_mobile: phone })
             });
 
@@ -550,10 +560,13 @@
 
         } catch (e) {
             console.error("Fetch error:", e);
-            alert("Error: " + e.message);
-        } finally {
             btn.disabled = false;
             loader.style.display = "none";
+            if (e.message.includes("Failed to fetch")) {
+                alert("ইন্টারনেট সমস্যা অথবা AdBlocker/VPN রিকোয়েস্ট ব্লক করেছে। দয়া করে AdBlocker বা VPN বন্ধ করে আবার চেষ্টা করুন।");
+            } else {
+                alert("Error: " + e.message);
+            }
         }
     }
 </script>

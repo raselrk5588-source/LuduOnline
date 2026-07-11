@@ -1,0 +1,1 @@
+2026-07-05 22:22:06 | Request: {"applicationId":"APP_138739","subscriberId":"tel:8801862636137","applicationHash":"App Name","applicationMetaData":{"client":"MOBILEAPP","device":"Samsung S10","os":"android 8","appCode":"https:\/\/play.google.com\/store\/apps\/details?id=lk.dialog.megarunlor"}}

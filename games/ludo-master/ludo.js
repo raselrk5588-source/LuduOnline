@@ -16,11 +16,31 @@ if (myPlayerId) {
     localStorage.setItem('ludoPlayerName', myPlayerId);
 }
 
+let turnTimer = null;
+let turnTimeLeft = 15;
+let currentDiceValue = null;
+
 const isBot = {
     'green': false,
     'yellow': false,
     'blue': false,
     'red': false
+};
+
+window.customAlert = function(msg, reloadOnClose = false) {
+    let modal = document.getElementById('custom-alert-modal');
+    if (modal) {
+        document.getElementById('custom-alert-msg').innerText = msg;
+        modal.style.display = 'flex';
+        let btn = modal.querySelector('button');
+        btn.onclick = () => {
+            modal.style.display = 'none';
+            if (reloadOnClose) location.reload();
+        };
+    } else {
+        alert(msg);
+        if (reloadOnClose) location.reload();
+    }
 };
 
 const tokenPositions = {
@@ -85,10 +105,10 @@ const rollBtns = {
     'red': document.getElementById('panel-red')
 };
 const dice3D = {
-    'green': document.getElementById('dice-green'),
-    'yellow': document.getElementById('dice-yellow'),
-    'blue': document.getElementById('dice-blue'),
-    'red': document.getElementById('dice-red')
+    'green': document.getElementById('main-dice'),
+    'yellow': document.getElementById('main-dice'),
+    'blue': document.getElementById('main-dice'),
+    'red': document.getElementById('main-dice')
 };
 const diceRotations = { 'green': {x:0, y:0}, 'yellow': {x:0, y:0}, 'blue': {x:0, y:0}, 'red': {x:0, y:0} };
 
@@ -104,12 +124,13 @@ function showFloatingEmoji(emoji, x, y) {
 }
 
 function showWinScreen(color, customMessage = "অভিনন্দন!") {
+    let currentName = document.getElementById('name-' + color).innerText || playerNames[color];
     let el = document.createElement('div');
     el.className = 'win-overlay';
     
     el.innerHTML = `
         <div class="trophy">🏆</div>
-        <h1 style="color: #fff">${playerNames[color]} প্রথম হয়েছে!</h1>
+        <h1 style="color: #fff">${currentName} প্রথম হয়েছে!</h1>
         <p style="color: #ffcccc; font-size: 24px; margin-top: -10px;">${customMessage}</p>
         <button onclick="location.reload()" style="margin-top:20px; padding: 15px 30px; font-size:20px; cursor:pointer; border-radius:10px; border:none; background:#fff; color:#000; font-weight:bold; font-family: 'Hind Siliguri', sans-serif;">আবার খেলুন</button>
     `;
@@ -198,25 +219,114 @@ function updateAllTokenPositions() {
     });
 }
 
+function startTurnTimer() {
+    stopTurnTimer();
+    if (!isOnlineMode) return;
+    
+    let timerContainer = document.getElementById('turn-timer-container');
+    let timerSpan = document.getElementById('turn-timer');
+    if (timerContainer && timerSpan) {
+        timerContainer.style.display = 'block';
+        turnTimeLeft = 15;
+        timerSpan.innerText = turnTimeLeft + 's';
+        
+        turnTimer = setInterval(() => {
+            turnTimeLeft--;
+            timerSpan.innerText = turnTimeLeft + 's';
+            
+            if (turnTimeLeft <= 0) {
+                stopTurnTimer();
+                handleTurnTimeout();
+            }
+        }, 1000);
+    }
+}
+
+function stopTurnTimer() {
+    if (turnTimer) {
+        clearInterval(turnTimer);
+        turnTimer = null;
+    }
+    let timerContainer = document.getElementById('turn-timer-container');
+    if (timerContainer) {
+        timerContainer.style.display = 'none';
+    }
+}
+
+function handleTurnTimeout() {
+    if (!isOnlineMode || !currentRoomId) return;
+    
+    let currentColor = players[currentPlayerIndex];
+    let isMaster = false;
+    
+    // Check if I am the master client (first human player)
+    db.ref('rooms/' + currentRoomId + '/players').once('value').then(snap => {
+        let p = snap.val() || {};
+        let currentOnlinePlayers = Object.keys(p);
+        let firstHuman = currentOnlinePlayers.find(c => p[c] !== 'bot');
+        if (myColor === firstHuman) {
+            isMaster = true;
+        }
+        
+        // Auto-play if I am the current player OR if I am the master and the current player didn't play
+        if (myColor === currentColor || isMaster) {
+            window.isForcedAutoMove = true;
+            if (gameState === 'waiting_for_roll') {
+                rollDice(currentColor, true); // true indicates auto-roll
+            } else if (gameState === 'waiting_for_move') {
+                // Pick a move like a bot
+                let validMoves = evaluateValidMoves(currentColor, currentDiceValue || 1);
+                if (validMoves.length > 0) {
+                    botMove(currentColor, validMoves, currentDiceValue || 1);
+                } else {
+                    switchTurn();
+                    syncGameState();
+                }
+            }
+        }
+    });
+}
+
 function updateTurnVisuals() {
+    stopTurnTimer();
     gameState = 'waiting_for_roll';
     players.forEach(color => {
-        if(color === players[currentPlayerIndex]) {
-            rollBtns[color].classList.remove('disabled');
-            rollBtns[color].classList.add('active');
-            
-            if (isOnlineMode && color !== myColor) {
-                rollBtns[color].classList.add('remote-turn');
-            } else {
-                rollBtns[color].classList.remove('remote-turn');
-            }
-        } else {
-            rollBtns[color].classList.add('disabled');
-            rollBtns[color].classList.remove('active', 'has-result', 'remote-turn');
+        if(rollBtns[color]) {
+            rollBtns[color].classList.remove('active', 'active-turn', 'has-result', 'remote-turn');
         }
     });
 
     let currentColor = players[currentPlayerIndex];
+    if(rollBtns[currentColor]) {
+        rollBtns[currentColor].classList.add('active-turn');
+    }
+    
+    const activeDiceArea = document.getElementById('active-dice-area');
+    const turnIndicator = document.getElementById('turn-indicator');
+    
+    if (activeDiceArea) {
+        activeDiceArea.className = 'active-dice-area waiting'; 
+        if (!isBot[currentColor] && (!isOnlineMode || currentColor === myColor)) {
+            activeDiceArea.classList.add('active-' + currentColor);
+        }
+    }
+    
+    if (turnIndicator) {
+        let currentName = document.getElementById('name-' + currentColor).innerText || playerNames[currentColor];
+        
+        let colorHex = { 'green': '#2ecc71', 'yellow': '#f1c40f', 'blue': '#3498db', 'red': '#e74c3c' }[currentColor];
+        
+        if (!isBot[currentColor] && (!isOnlineMode || currentColor === myColor) && (currentName === "আপনি" || currentName === myPlayerId || currentName === "খেলোয়াড়১" && currentColor === 'green')) {
+            turnIndicator.innerText = "আপনার পালা";
+        } else {
+            turnIndicator.innerText = currentName + " এর পালা";
+        }
+        
+        turnIndicator.style.color = colorHex;
+        turnIndicator.style.textShadow = `0 0 5px ${colorHex}`;
+        turnIndicator.style.opacity = '1';
+    }
+
     if (isBot[currentColor]) {
         // Auto roll for bot after short delay
         setTimeout(() => {
@@ -224,6 +334,8 @@ function updateTurnVisuals() {
                 rollDice(currentColor);
             }
         }, 800);
+    } else {
+        startTurnTimer();
     }
 }
 
@@ -255,19 +367,33 @@ function setupTokenClicks(color, validMoves, diceValue) {
         setTimeout(() => moveToken(color, validMoves[0], diceValue), 300);
     } else {
         gameState = 'waiting_for_move';
+        startTurnTimer();
         validMoves.forEach(i => {
             let el = document.getElementById(`${color}-${i}`);
             el.classList.add('clickable');
-            el.onclick = () => moveToken(color, i, diceValue);
+            
+            // Named handler for proper cleanup
+            function tokenClickHandler(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                moveToken(color, i, diceValue);
+            }
+            
+            el.onclick = tokenClickHandler;
+            el.ontouchstart = tokenClickHandler;
+            el._tokenHandler = tokenClickHandler; 
         });
     }
 }
 
 function moveToken(color, i, diceValue) {
+    stopTurnTimer();
     gameState = 'moving';
     document.querySelectorAll('.token').forEach(t => {
         t.classList.remove('clickable');
         t.onclick = null;
+        t.ontouchstart = null;
+        delete t._tokenHandler;
     });
 
     let currentPos = tokenPositions[color][i];
@@ -341,8 +467,9 @@ function handleMoveEnd(color, i, diceValue) {
         switchTurn();
     }
     
-    if (isOnlineMode && (myColor === color || isBot[color])) {
+    if (isOnlineMode && (myColor === color || isBot[color] || window.isForcedAutoMove)) {
         syncGameState();
+        window.isForcedAutoMove = false;
     }
 }
 
@@ -370,11 +497,18 @@ function getDiceRotation(value, color) {
     return `translateZ(-30px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 }
 
-function rollDice(color) {
+function rollDice(color, isAuto = false) {
     if (color !== players[currentPlayerIndex] || gameState !== 'waiting_for_roll') return;
 
+    stopTurnTimer();
     gameState = 'rolling';
     rollBtns[color].classList.add('rolling', 'has-result');
+    const activeDiceArea = document.getElementById('active-dice-area');
+    if(activeDiceArea) {
+        activeDiceArea.classList.remove('waiting');
+        activeDiceArea.classList.add('rolling');
+        document.getElementById('dice-visual').innerHTML = '🎲';
+    }
     
     // Increased probability for rolling a 6
     let allInBase = tokenPositions[color].every(pos => pos === -1);
@@ -386,8 +520,9 @@ function rollDice(color) {
     } else {
         diceValue = Math.floor(Math.random() * 5) + 1;
     }
+    currentDiceValue = diceValue;
 
-    if (isOnlineMode && (myColor === color || isBot[color])) {
+    if (isOnlineMode && (myColor === color || isBot[color] || isAuto)) {
         db.ref('rooms/' + currentRoomId + '/lastRoll').set({
             color: color,
             value: diceValue,
@@ -395,10 +530,12 @@ function rollDice(color) {
         });
     }
 
-    dice3D[color].style.transform = getDiceRotation(diceValue, color);
-
     setTimeout(() => {
         rollBtns[color].classList.remove('rolling');
+        const activeDiceArea = document.getElementById('active-dice-area');
+        if(activeDiceArea) activeDiceArea.classList.remove('rolling');
+        document.getElementById('dice-visual').innerHTML = `<div class="dice-result-badge">${diceValue}</div>`;
+        
         let validMoves = evaluateValidMoves(color, diceValue);
         
         if (validMoves.length === 0) {
@@ -477,8 +614,7 @@ players.forEach(color => {
 });
 
 createTokens();
-dice3D['green'].style.transform = 'translateZ(-30px) rotateX(0deg) rotateY(0deg)';
-
+// Initial reset removed
 function showWrongTurn() {
     let popup = document.getElementById('wrong-turn-popup');
     if (popup) {
@@ -503,20 +639,77 @@ function showWrongTurn() {
     }
 }
 
+// Initialize/reset game state
+function initGame() {
+    // Reset all token positions to home
+    players.forEach(color => {
+        for (let i = 0; i < 4; i++) {
+            tokenPositions[color][i] = -1;
+        }
+    });
+
+    // Reset current player to the first active player
+    currentPlayerIndex = players.indexOf(activePlayers[0]);
+
+    // Reset game state
+    gameState = 'waiting_for_roll';
+    hasGameStarted = true;
+
+    // Make sure all panels are visible for active players and hidden for inactive
+    players.forEach(color => {
+        if (activePlayers.includes(color)) {
+            document.getElementById('panel-' + color).style.visibility = 'visible';
+        } else {
+            document.getElementById('panel-' + color).style.visibility = 'hidden';
+        }
+    });
+
+    // Update token display
+    updateAllTokenPositions();
+}
+
 // Mode selection logic
-document.getElementById('btn-manual').onclick = () => {
-    activePlayers = ['green', 'yellow', 'blue', 'red'];
-    document.getElementById('name-green').innerText = "খেলোয়াড় ১";
-    document.getElementById('name-yellow').innerText = "খেলোয়াড় ২";
-    document.getElementById('name-blue').innerText = "খেলোয়াড় ৩";
-    document.getElementById('name-red').innerText = "খেলোয়াড় ৪";
+if(document.getElementById('btn-manual')) document.getElementById('btn-manual').onclick = () => {
+    document.getElementById('player-count-modal').style.display = 'flex';
+};
+
+window.startManualGame = function(count) {
+    document.getElementById('player-count-modal').style.display = 'none';
     
-    document.getElementById('start-menu').style.display = 'none';
-    document.getElementById('game-area').style.display = 'block';
+    if (count === 2) {
+        activePlayers = ['green', 'blue'];
+        document.getElementById('name-green').innerText = "সবুজ";
+        document.getElementById('name-yellow').innerText = "";
+        document.getElementById('name-blue').innerText = "নীল";
+        document.getElementById('name-red').innerText = "";
+    } else if (count === 3) {
+        activePlayers = ['green', 'yellow', 'red'];
+        document.getElementById('name-green').innerText = "সবুজ";
+        document.getElementById('name-yellow').innerText = "হলুদ";
+        document.getElementById('name-blue').innerText = "";
+        document.getElementById('name-red').innerText = "লাল";
+    } else {
+        activePlayers = ['green', 'yellow', 'blue', 'red'];
+        document.getElementById('name-green').innerText = "সবুজ";
+        document.getElementById('name-yellow').innerText = "হলুদ";
+        document.getElementById('name-blue').innerText = "নীল";
+        document.getElementById('name-red').innerText = "লাল";
+    }
+    
+    // Hide panels for inactive players
+    ['green', 'yellow', 'blue', 'red'].forEach(color => {
+        let panel = document.getElementById('panel-' + color);
+        if (panel) {
+            panel.style.visibility = activePlayers.includes(color) ? 'visible' : 'hidden';
+        }
+    });
+    
+    navigateTo('screen-game');
+    initGame();
     updateTurnVisuals();
 };
 
-document.getElementById('btn-robot').onclick = () => {
+if(document.getElementById('btn-robot')) document.getElementById('btn-robot').onclick = () => {
     activePlayers = ['green', 'blue'];
     isBot['blue'] = true;
     
@@ -532,13 +725,13 @@ document.getElementById('btn-robot').onclick = () => {
     // Update tokens immediately
     updateAllTokenPositions();
     
-    document.getElementById('start-menu').style.display = 'none';
-    document.getElementById('game-area').style.display = 'block';
+    navigateTo('screen-game');
+    initGame();
     updateTurnVisuals();
 };
 
 // Online Mode UI Logic
-document.getElementById('btn-online').onclick = () => {
+if(document.getElementById('btn-online')) document.getElementById('btn-online').onclick = () => {
     if (!myPlayerId) {
         document.getElementById('player-name-modal').style.display = 'flex';
     } else {
@@ -546,7 +739,7 @@ document.getElementById('btn-online').onclick = () => {
     }
 };
 
-document.getElementById('btn-save-name').onclick = () => {
+if(document.getElementById('btn-save-name')) document.getElementById('btn-save-name').onclick = () => {
     let name = document.getElementById('player-name-input').value.trim();
     if (name === '') {
         alert("দয়া করে একটি নাম দিন!");
@@ -562,13 +755,12 @@ document.getElementById('btn-save-name').onclick = () => {
 };
 
 function showOnlineLobby() {
-    document.getElementById('start-menu').style.display = 'none';
     document.getElementById('online-lobby-menu').style.display = 'flex';
     document.getElementById('my-player-id').innerText = myPlayerId;
     initFirebase();
 }
 
-document.getElementById('btn-back-to-menu-from-lobby').onclick = () => {
+if(document.getElementById('btn-back-to-menu-from-lobby')) document.getElementById('btn-back-to-menu-from-lobby').onclick = () => {
     document.getElementById('online-lobby-menu').style.display = 'none';
     document.getElementById('start-menu').style.display = 'flex';
     if (db) {
@@ -622,59 +814,96 @@ function joinLobby() {
             if (pid !== myPlayerId && (players[pid] !== 'playing' || inviteStatus)) {
                 count++;
                 let li = document.createElement('li');
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
-                li.style.alignItems = 'center';
-                li.style.padding = '8px';
-                li.style.borderBottom = '1px solid #eee';
-                let btnStyle = 'background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;';
+                let btnStyle = 'background: linear-gradient(90deg, #6c5ce7, #d100ff); color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; box-shadow: 0 4px 10px rgba(108, 92, 231, 0.4);';
                 let btnText = 'ইনভাইট';
                 let disabled = '';
                 if (inviteStatus === 'pending') {
-                    btnStyle = 'background:gray;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                    btnStyle = 'background: rgba(255,255,255,0.2); color: #aaa; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: not-allowed; font-family: inherit; font-size: 14px;';
                     btnText = 'পাঠানো হয়েছে';
                     disabled = 'disabled';
                 } else if (inviteStatus === 'accepted') {
-                    btnStyle = 'background:#4CAF50;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                    btnStyle = 'background: #2ecc71; color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: not-allowed; font-family: inherit; font-size: 14px; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.4);';
                     btnText = 'যুক্ত হয়েছে';
                     disabled = 'disabled';
                 }
                 
-                li.innerHTML = `<span style="color: #333; font-weight: 600;">${pid}</span> 
-                                <button id="invite-btn-${pid}" onclick="sendInvite('${pid}', this)" style="${btnStyle}" ${disabled}>${btnText}</button>`;
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.alignItems = 'center';
+                li.style.padding = '12px 15px';
+                li.style.background = 'rgba(255, 255, 255, 0.05)';
+                li.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                li.style.borderRadius = '12px';
+                
+                let avatarList = ['avatar_male_1.png', 'avatar_female_1.png', 'avatar_male_2.png', 'avatar_female_2.png'];
+                let charSum = 0;
+                for (let i = 0; i < pid.length; i++) charSum += pid.charCodeAt(i);
+                let avatarSrc = 'assets/' + avatarList[charSum % avatarList.length];
+
+                li.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 45px; height: 45px; border-radius: 50%; background: #333; border: 2px solid #3498db; overflow: hidden; box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);">
+                            <img src="${avatarSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ccc%22/></svg>'">
+                        </div>
+                        <div style="text-align: left;">
+                            <h4 style="margin: 0; color: #fff; font-size: 16px; font-weight: 600;">${pid}</h4>
+                        </div>
+                    </div>
+                    <button id="invite-btn-${pid}" onclick="sendInvite('${pid}', this)" style="${btnStyle}" ${disabled}>${btnText}</button>
+                `;
                 listEl.appendChild(li);
             }
         }
         let botNames = ['আকাশ', 'সুমাইয়া', 'সাদিয়া', 'নয়ন'];
         botNames.forEach(bot => {
             let li = document.createElement('li');
-            li.style.display = 'flex';
-            li.style.justifyContent = 'space-between';
-            li.style.alignItems = 'center';
-            li.style.padding = '8px';
-            li.style.borderBottom = '1px solid #eee';
             let inviteStatus = window.sentInvites && window.sentInvites[bot] ? window.sentInvites[bot] : '';
-            let btnStyle = 'background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;';
+            let btnStyle = 'background: linear-gradient(90deg, #6c5ce7, #d100ff); color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; box-shadow: 0 4px 10px rgba(108, 92, 231, 0.4);';
             let btnText = 'ইনভাইট';
             let disabled = '';
             if (inviteStatus === 'pending') {
-                btnStyle = 'background:gray;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                btnStyle = 'background: rgba(255,255,255,0.2); color: #aaa; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: not-allowed; font-family: inherit; font-size: 14px;';
                 btnText = 'পাঠানো হয়েছে';
                 disabled = 'disabled';
             } else if (inviteStatus === 'accepted') {
-                btnStyle = 'background:#4CAF50;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:not-allowed;';
+                btnStyle = 'background: #2ecc71; color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: not-allowed; font-family: inherit; font-size: 14px; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.4);';
                 btnText = 'যুক্ত হয়েছে';
                 disabled = 'disabled';
             }
 
-            li.innerHTML = `<span style="color: #333; font-weight: 600;">${bot}</span> 
-                            <button id="invite-btn-${bot}" onclick="sendInvite('${bot}', this)" style="${btnStyle}" ${disabled}>${btnText}</button>`;
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.alignItems = 'center';
+            li.style.padding = '12px 15px';
+            li.style.background = 'rgba(255, 255, 255, 0.05)';
+            li.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+            li.style.borderRadius = '12px';
+
+            let botAvatars = {
+                'আকাশ': 'avatar_male_1.png',
+                'সুমাইয়া': 'avatar_female_1.png',
+                'সাদিয়া': 'avatar_female_2.png',
+                'নয়ন': 'avatar_male_2.png'
+            };
+            let avatarSrc = 'assets/' + botAvatars[bot];
+
+            li.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 45px; height: 45px; border-radius: 50%; background: #333; border: 2px solid #f1c40f; overflow: hidden; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);">
+                        <img src="${avatarSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ccc%22/></svg>'">
+                    </div>
+                    <div style="text-align: left;">
+                        <h4 style="margin: 0; color: #fff; font-size: 16px; font-weight: 600;">${bot}</h4>
+                    </div>
+                </div>
+                <button id="invite-btn-${bot}" onclick="sendInvite('${bot}', this)" style="${btnStyle}" ${disabled}>${btnText}</button>
+            `;
             listEl.appendChild(li);
             count++;
         });
 
         if (count === 0) {
-            listEl.innerHTML = '<li style="text-align: center; color: #777;">এই মুহূর্তে কেউ অনলাইনে নেই।</li>';
+            listEl.innerHTML = '<li style="text-align: center; color: #aaa; padding: 20px;">এই মুহূর্তে কেউ অনলাইনে নেই।</li>';
         }
     });
 
@@ -741,9 +970,27 @@ window.sendInvite = function(receiverId, btn) {
                     db.ref('rooms/' + currentRoomId + '/names').once('value').then(nameSnap => {
                         let names = nameSnap.val() || {};
                         let listHTML = '';
+                        
+                        // Clear invites for players who left
+                        let currentNamesInRoom = Object.keys(p).map(c => names[c] || c);
+                        if (window.sentInvites) {
+                            for (let pid in window.sentInvites) {
+                                if (window.sentInvites[pid] === 'accepted' && !currentNamesInRoom.includes(pid) && pid !== myPlayerId) {
+                                    delete window.sentInvites[pid];
+                                    let domBtn = document.getElementById('invite-btn-' + pid);
+                                    if (domBtn) {
+                                        domBtn.innerText = 'ইনভাইট';
+                                        domBtn.style.backgroundColor = '#2196F3';
+                                        domBtn.disabled = false;
+                                        domBtn.style.cursor = 'pointer';
+                                    }
+                                }
+                            }
+                        }
+
                         Object.keys(p).forEach(c => {
                             let name = names[c] || c;
-                            listHTML += `<li style="padding: 5px; border-bottom: 1px solid #ddd; color: #333; font-weight: bold;">✅ ${name}</li>`;
+                            listHTML += `<li style="padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 10px;">✅ ${name}</li>`;
                             
                             // Automatically disable the invite button if they are in the room
                             if (!window.sentInvites) window.sentInvites = {};
@@ -881,11 +1128,11 @@ function sendSingleInvite(receiverId, btn) {
 }
 
 // Host clicks Start Game
-document.getElementById('btn-start-online-game').onclick = () => {
+if(document.getElementById('btn-start-online-game')) document.getElementById('btn-start-online-game').onclick = () => {
     db.ref('rooms/' + currentRoomId + '/players').once('value').then(snap => {
         let players = snap.val() || {};
         if (Object.keys(players).length < 2) {
-            alert("কমপক্ষে ২ জন খেলোয়াড় প্রয়োজন গেম শুরু করার জন্য!");
+            customAlert('কমপক্ষে ২ জন খেলোয়াড় প্রয়োজন গেম শুরু করার জন্য!');
             return;
         }
         
@@ -945,6 +1192,7 @@ function joinRoomAsGuest(roomId) {
 function listenToRoom() {
     document.getElementById('online-lobby-menu').style.display = 'none';
     document.getElementById('game-area').style.display = 'block';
+    navigateTo('screen-game');
     
     // Listen for players joining/leaving to update activePlayers
     db.ref('rooms/' + currentRoomId + '/players').on('value', snap => {
@@ -987,6 +1235,8 @@ function listenToRoom() {
                         nameEl.innerText = displayName;
                     }
                 });
+                // Update visuals after names are set
+                updateTurnVisuals();
             });
             
             if (currentOnlinePlayers.length > 1) {
@@ -995,6 +1245,7 @@ function listenToRoom() {
             
             if (hasGameStarted && currentOnlinePlayers.length === 1 && currentOnlinePlayers[0] === myColor) {
                 // Opponent left
+                window.gameWon = true;
                 showWinScreen(myColor, "বিপক্ষ খেলোয়াড় ডিসকানেক্ট হয়ে গেছে!");
                 db.ref('rooms/' + currentRoomId).remove(); // Cleanup room
                 return;
@@ -1018,9 +1269,8 @@ function listenToRoom() {
             updateTurnVisuals();
         } else {
             // Room was deleted
-            if (hasGameStarted) {
-                alert('রুমটি বন্ধ হয়ে গেছে বা সবাই ডিসকানেক্ট হয়ে গেছে!');
-                location.reload();
+            if (hasGameStarted && !window.gameWon) {
+                customAlert('রুমটি বন্ধ হয়ে গেছে বা সবাই ডিসকানেক্ট হয়ে গেছে!', true);
             }
         }
     });
@@ -1056,14 +1306,104 @@ function listenToRoom() {
         if(roll && roll.color !== myColor) { // Someone else rolled
             gameState = 'rolling';
             rollBtns[roll.color].classList.add('rolling', 'has-result');
-            dice3D[roll.color].style.transform = getDiceRotation(roll.value, roll.color);
+            const activeDiceArea = document.getElementById('active-dice-area');
+            if(activeDiceArea) {
+                activeDiceArea.classList.remove('waiting');
+                activeDiceArea.classList.add('rolling');
+                document.getElementById('dice-visual').innerHTML = '🎲';
+            }
             
             setTimeout(() => {
                 rollBtns[roll.color].classList.remove('rolling');
+                const activeDiceArea = document.getElementById('active-dice-area');
+                if(activeDiceArea) activeDiceArea.classList.remove('rolling');
+                document.getElementById('dice-visual').innerHTML = `<div class="dice-result-badge">${roll.value}</div>`;
+                
+                currentDiceValue = roll.value;
+                gameState = 'waiting_for_move';
+                startTurnTimer();
                 // The actual token movement sync happens via gameState tokenPositions
             }, 1200);
         }
     });
 }
 
+function navigateTo(screenId, navElement = null) {
+    if (screenId === 'screen-home') {
+        let leavingRoomId = typeof currentRoomId !== 'undefined' ? currentRoomId : null;
+        let leavingColor = typeof myColor !== 'undefined' ? myColor : null;
+        
+        // Reset online states when returning home
+        window.sentInvites = {};
+        if (typeof currentRoomId !== 'undefined') currentRoomId = null;
+        if (typeof isHost !== 'undefined') isHost = true;
+        let inviteSection = document.getElementById('invite-section');
+        if (inviteSection) inviteSection.style.display = 'block';
+        let onlineLobby = document.getElementById('online-lobby-menu');
+        if (onlineLobby) onlineLobby.style.display = 'none';
+        
+        // Remove from current room if leaving
+        if (db && leavingRoomId) {
+            if (leavingColor) {
+                db.ref('rooms/' + leavingRoomId + '/players/' + leavingColor).remove();
+            }
+            // Turn off listeners to prevent popup when staying player deletes room
+            db.ref('rooms/' + leavingRoomId + '/players').off();
+            db.ref('rooms/' + leavingRoomId + '/gameState').off();
+            db.ref('rooms/' + leavingRoomId + '/lastRoll').off();
+        }
+    }
 
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+    document.getElementById(screenId).classList.add('active-screen');
+    
+    const bottomNav = document.getElementById('bottom-nav');
+    if (bottomNav) {
+        if (screenId === 'screen-game') {
+            bottomNav.style.display = 'none';
+        } else {
+            bottomNav.style.display = 'flex';
+        }
+    }
+    
+    if (navElement) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        navElement.classList.add('active');
+    }
+}
+
+if(document.getElementById('btn-guest-login')) document.getElementById('btn-guest-login').onclick = () => {
+    navigateTo('screen-home');
+};
+
+// Custom mode handlers removed, reverted to original handlers.
+
+// Wrapper removed
+
+// Update lobby back button
+if(document.getElementById('btn-back-to-menu-from-lobby')) document.getElementById('btn-back-to-menu-from-lobby').onclick = () => {
+    document.getElementById('online-lobby-menu').style.display = 'none';
+    navigateTo('screen-home');
+    if (db) db.ref('onlinePlayers/' + myPlayerId).remove();
+};
+
+
+// Event listener for the new central dice
+window.handleCentralDiceClick = function(e) {
+    if (e) e.preventDefault();
+    let currentColor = players[currentPlayerIndex]; 
+    if (gameState === 'waiting_for_roll' && !isBot[currentColor] && (!isOnlineMode || currentColor === myColor)) { 
+        rollDice(currentColor); 
+    } 
+};
+
+// Add touch support for central dice
+(function() {
+    const diceArea = document.getElementById('active-dice-area');
+    if (diceArea) {
+        diceArea.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            handleCentralDiceClick(e);
+        }, { passive: false });
+    }
+})();

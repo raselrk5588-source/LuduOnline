@@ -44,8 +44,11 @@
       loader.style.display = "block";
 
       try {
-          const res = await fetch("verify_otp.php", {
+          const res = await fetch("/auth/verify_otp.php", {
             method: "POST",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
             body: new URLSearchParams({
               Otp: otp,
               referenceNo: ref,
@@ -62,7 +65,12 @@
             alert(data.message || "OTP ভুল");
           }
       } catch(e) {
-          alert("Network error");
+          console.error("OTP verification error:", e);
+          if (e.message && e.message.includes("Failed to fetch")) {
+              alert("ইন্টারনেট সমস্যা অথবা AdBlocker/VPN রিকোয়েস্ট ব্লক করেছে। দয়া করে AdBlocker বা VPN বন্ধ করে আবার চেষ্টা করুন।");
+          } else {
+              alert("Network error: " + e.message);
+          }
       } finally {
           btn.disabled = false;
           loader.style.display = "none";

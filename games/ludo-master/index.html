@@ -2,170 +2,271 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>লুডু মাস্টার</title>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=5">
     <script>
-        if (localStorage.getItem('isLoggedIn') !== 'true') {
-            window.location.href = '../../index.html';
-        }
+        // Temporarily disabled for testing
+        // if (localStorage.getItem('isLoggedIn') !== 'true') {
+        //     window.location.href = '../../index.html';
+        // }
     </script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <a href="../../index.html" class="back-btn">⬅ প্ল্যাটফর্মে ফেরত যান</a>
-            <h1>লুডু মাস্টার 🎲</h1>
-        </header>
-
-        <!-- Start Menu Modal -->
-        <div id="start-menu" class="mode-modal">
-            <a href="../../index.html" class="modal-back-btn">⬅ প্ল্যাটফর্মে ফেরত যান</a>
-            <div class="mode-modal-content">
-                <h2>গেম মোড নির্বাচন করুন</h2>
-                <div class="mode-options">
-                    <button id="btn-manual" class="mode-btn">
-                        <span class="mode-icon">👥</span>
-                        <strong>ম্যানুয়াল</strong>
-                        <span>৪ জন মানুষ খেলবে (অফলাইন)</span>
-                    </button>
-                    <button id="btn-robot" class="mode-btn">
-                        <span class="mode-icon">🤖</span>
-                        <strong>রোবট (AI)</strong>
-                        <span>১ জন মানুষ বনাম ৩ জন বট</span>
-                    </button>
-                    <button id="btn-online" class="mode-btn">
-                        <span class="mode-icon">🌍</span>
-                        <strong>অনলাইন</strong>
-                        <span>বন্ধুদের সাথে খেলুন</span>
-                    </button>
+    <div class="app-container">
+        
+        <!-- Screen 1: Splash / Loading Screen -->
+        <div id="screen-splash" class="screen active-screen">
+            <div class="splash-content loading-layout">
+                <div class="logo-area-large" style="display: flex; justify-content: center; align-items: center; height: 70vh; position: relative;">
+                    <img src="assets/splash_bg_notext.png" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); animation: floatUp 3s infinite alternate ease-in-out;">
+                    <h1 class="logo-text-huge" style="position: absolute; z-index: 10; text-align: center; text-shadow: 0 8px 20px rgba(0,0,0,0.9), 0 0 20px rgba(255,215,0,0.8);">লুডু<br><span>মাস্টার</span></h1>
                 </div>
-            </div>
-        </div>
-
-        <!-- Online Lobby Modal -->
-        <div id="online-lobby-menu" class="mode-modal" style="display: none;">
-            <button id="btn-back-to-menu-from-lobby" class="modal-back-btn">⬅ ফিরে যান</button>
-            <div class="mode-modal-content" style="max-height: 80vh; overflow-y: auto;">
-                <h2>অনলাইন লবি</h2>
-                <p style="text-align: center; color: #555;">আপনার আইডি: <strong id="my-player-id">লোড হচ্ছে...</strong></p>
-                <div id="invite-section" style="margin-top: 15px;">
-                    <h3>অনলাইন খেলোয়াড়:</h3>
-                    <ul id="online-players-list" style="list-style: none; padding: 0; margin-top: 10px;">
-                        <li style="text-align: center; color: #777;">খেলোয়াড় খোঁজা হচ্ছে...</li>
-                    </ul>
-                </div>
-                <div id="start-online-game-container" style="display: none; text-align: center; margin-top: 20px;">
-                    <p id="lobby-status" style="color: #FFC107; font-weight: 600; margin-bottom: 10px;"></p>
-                    <ul id="joined-players-list" style="list-style: none; padding: 0; margin-bottom: 15px; text-align: left; background: #f9f9f9; border-radius: 5px;"></ul>
-                    <button id="btn-start-online-game" style="width: 100%; padding: 15px; font-size: 20px; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-family: 'Hind Siliguri', sans-serif;">গেম শুরু করুন (1/4 জন যুক্ত)</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Invite Notification Modal -->
-        <div id="invite-modal" class="custom-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
-            <div class="mode-modal-content" style="background: white; color: #333; padding: 20px; border-radius: 10px; text-align: center; max-width: 300px;">
-                <h3 style="color: #000;">নতুন ইনভাইট! 🎮</h3>
-                <p><strong id="inviter-name">কেউ</strong> আপনাকে লুডু খেলার জন্য ইনভাইট করেছে।</p>
-                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                    <button id="btn-decline-invite" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">বাতিল</button>
-                    <button id="btn-accept-invite" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">জয়েন করুন</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Player Name Modal -->
-        <div id="player-name-modal" class="custom-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
-            <div class="mode-modal-content" style="background: white; color: #333; padding: 20px; border-radius: 10px; text-align: center; max-width: 300px;">
-                <h3 style="color: #000;">আপনার নাম লিখুন 🎮</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">অনলাইনে খেলার জন্য একটি নাম দিন (এটি অন্যদের কাছে দেখাবে)।</p>
-                <input type="text" id="player-name-input" placeholder="আপনার নাম..." style="width: 80%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; margin-bottom: 15px; text-align: center;">
-                <button id="btn-save-name" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; width: 80%; font-weight: bold;">সংরক্ষণ করুন</button>
-            </div>
-        </div>
-
-        <div class="game-area" id="game-area" style="display: none;">
-            <!-- Top Left -->
-            <div class="player-panel green-panel" id="panel-green">
-                <div id="name-green" style="position: absolute; top: 2px; left: 0; color: white; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 1px 1px 2px black;"></div>
-                <div class="dice-container-3d" id="dice-wrap-green">
-                    <div class="dice-3d" id="dice-green">
-                        <div class="dice-face face-1"><div class="dot"></div></div>
-                        <div class="dice-face face-2"><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-3"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-4"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-5"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-6"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                
+                <div class="loading-container">
+                    <p class="loading-text">Loading...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 2: Home Dashboard -->
+        <div id="screen-home" class="screen">
+            <button class="exit-game-btn" onclick="if(confirm('আপনি কি গেমের ক্যাশ এবং আপনার নাম রিসেট করতে চান?')){localStorage.clear(); window.location.reload();}" style="top: 15px; left: 15px; right: auto; background: rgba(241, 196, 15, 0.2); border-color: rgba(241, 196, 15, 0.5); width: 40px; height: 40px; font-size: 16px; color: #f1c40f;" title="Clear Cache / Reset Name"><i class="fas fa-eraser"></i></button>
+            <button class="exit-game-btn" onclick="window.history.back()" style="top: 15px; left: auto; right: 15px; background: rgba(231, 76, 60, 0.2); border-color: rgba(231, 76, 60, 0.5); width: 40px; height: 40px; font-size: 18px;"><i class="fas fa-arrow-left"></i></button>
+
+            <div class="user-profile-summary">
+                <div class="avatar-container">
+                    <img src="assets/avatar_male_1.png" alt="Avatar" class="avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ccc%22/></svg>'">
+                    <span class="level-badge">12</span>
+                </div>
+                <div class="user-details">
+                    <h2 class="user-name" id="user-name-display">Guest1234</h2>
+                    <p>পুনরায় স্বাগতম!</p>
+                </div>
+            </div>
+
+            <div class="game-modes-stacked">
+                <button id="btn-manual" class="mode-btn-stacked local" style="overflow: hidden;">
+                    <img src="assets/local_3d.png" alt="friends" class="btn-icon" style="width: 50px; height: 50px; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 2; position: relative;">
+                    <div class="mode-text-stacked" style="z-index: 2; position: relative;">
+                        <h3>ম্যানুয়াল</h3>
+                        <p>২, ৩ বা ৪ জন খেলবে (অফলাইন)</p>
+                    </div>
+                    <img src="assets/bg_dice.png" style="position: absolute; right: -10px; top: -10px; height: 120px; opacity: 0.15; z-index: 1; pointer-events: none; mix-blend-mode: screen;">
+                </button>
+                <button id="btn-robot" class="mode-btn-stacked ai" style="overflow: hidden;">
+                    <img src="assets/robot_3d.png" alt="bot" class="btn-icon" style="width: 50px; height: 50px; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 2; position: relative;">
+                    <div class="mode-text-stacked" style="z-index: 2; position: relative;">
+                        <h3>রোবট (AI)</h3>
+                        <p>১ জন মানুষ বনাম ১ জন বট</p>
+                    </div>
+                    <img src="assets/bg_dice.png" style="position: absolute; right: -10px; top: -10px; height: 120px; opacity: 0.15; z-index: 1; pointer-events: none; mix-blend-mode: screen;">
+                </button>
+                <button id="btn-online" class="mode-btn-stacked join" style="overflow: hidden;">
+                    <img src="assets/online_3d.png" alt="online" class="btn-icon" style="width: 50px; height: 50px; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 2; position: relative;">
+                    <div class="mode-text-stacked" style="z-index: 2; position: relative;">
+                        <h3>অনলাইন</h3>
+                        <p>বন্ধুদের সাথে খেলুন</p>
+                    </div>
+                    <img src="assets/bg_dice.png" style="position: absolute; right: -10px; top: -10px; height: 120px; opacity: 0.15; z-index: 1; pointer-events: none; mix-blend-mode: screen;">
+                </button>
+            </div>
+        </div>
+
+        <!-- Screen 3: Game Area -->
+        <div id="screen-game" class="screen">
+            <div class="game-area" id="game-area">
+                <!-- Red Panel (Bottom Left) -->
+                <div class="player-panel red-panel" id="panel-red">
+                    <div id="name-red" class="p-name" style="position: absolute; bottom: 15px; left: 40px; white-space: nowrap; font-weight: bold; font-size: 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></div>
+                </div>
+                
+                <!-- Yellow Panel (Top Right) -->
+                <div class="player-panel yellow-panel" id="panel-yellow">
+                    <div id="name-yellow" class="p-name" style="position: absolute; top: 15px; right: 40px; white-space: nowrap; font-weight: bold; font-size: 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></div>
+                </div>
+
+                <!-- Board -->
+                <div class="board-container">
+                    <div class="ludo-board" id="ludo-board">
+                        <!-- Tokens will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Blue Panel (Bottom Right) -->
+                <div class="player-panel blue-panel" id="panel-blue">
+                    <div id="name-blue" class="p-name" style="position: absolute; bottom: 15px; right: 40px; white-space: nowrap; font-weight: bold; font-size: 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></div>
+                </div>
+
+                <!-- Green Panel (Top Left) -->
+                <div class="player-panel green-panel" id="panel-green">
+                    <div id="name-green" class="p-name" style="position: absolute; top: 15px; left: 40px; white-space: nowrap; font-weight: bold; font-size: 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></div>
+                </div>
+            </div>
+
+            <div class="game-footer" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <div id="turn-timer-container" style="display: none; background: rgba(0,0,0,0.6); padding: 2px 10px; border-radius: 10px; border: 1px solid #ff9800;">
+                    <span id="turn-timer" style="color: #ff9800; font-weight: bold; font-size: 14px;">15s</span>
+                </div>
+                <div id="turn-indicator" style="color: #fff; font-size: 18px; font-weight: bold; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; transition: all 0.3s; opacity: 0;">আপনার পালা</div>
+                <div class="active-dice-area" id="active-dice-area" onclick="handleCentralDiceClick()">
+                    <div id="dice-visual" style="pointer-events: none;">🎲</div>
                 </div>
             </div>
             
-            <!-- Top Right -->
-            <div class="player-panel yellow-panel" id="panel-yellow">
-                <div id="name-yellow" style="position: absolute; top: 2px; left: 0; color: white; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 1px 1px 2px black;"></div>
-                <div class="dice-container-3d" id="dice-wrap-yellow">
-                    <div class="dice-3d" id="dice-yellow">
-                        <div class="dice-face face-1"><div class="dot"></div></div>
-                        <div class="dice-face face-2"><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-3"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-4"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-5"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-6"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                    </div>
-                </div>
-            </div>
+            <button class="exit-game-btn" onclick="navigateTo('screen-home')"><i class="fas fa-times"></i></button>
+        </div>
 
-            <!-- Board -->
-            <div class="board-container">
-                <div class="ludo-board" id="ludo-board">
-                    <!-- Tokens will be injected here -->
-                </div>
+        <!-- Screen 4: Wallet -->
+        <div id="screen-wallet" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="navigateTo('screen-home')"><i class="fas fa-arrow-left"></i></button>
+                <h2>My Wallet</h2>
             </div>
-
-            <!-- Bottom Left -->
-            <div class="player-panel red-panel" id="panel-red">
-                <div id="name-red" style="position: absolute; top: 2px; left: 0; color: white; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 1px 1px 2px black;"></div>
-                <div class="dice-container-3d" id="dice-wrap-red">
-                    <div class="dice-3d" id="dice-red">
-                        <div class="dice-face face-1"><div class="dot"></div></div>
-                        <div class="dice-face face-2"><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-3"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-4"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-5"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-6"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                    </div>
+            <div class="wallet-balance-card">
+                <p>Total Coins</p>
+                <div class="balance-amount">
+                    <img src="assets/coin.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23FFD700%22/></svg>'" class="coin-icon">
+                    <span>1,200</span>
                 </div>
+                <button class="add-coins-btn-large">+ Add Coins</button>
             </div>
-
-            <!-- Bottom Right -->
-            <div class="player-panel blue-panel" id="panel-blue">
-                <div id="name-blue" style="position: absolute; top: 2px; left: 0; color: white; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 1px 1px 2px black;"></div>
-                <div class="dice-container-3d" id="dice-wrap-blue">
-                    <div class="dice-3d" id="dice-blue">
-                        <div class="dice-face face-1"><div class="dot"></div></div>
-                        <div class="dice-face face-2"><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-3"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-4"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-5"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        <div class="dice-face face-6"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <div class="coin-packages">
+                <h3>Coin Packages</h3>
+                <div class="package-item">
+                    <div class="pkg-left">
+                        <img src="assets/coins_1.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23FFD700%22/></svg>'" class="pkg-icon">
+                        <span>500 Coins</span>
                     </div>
+                    <button class="buy-btn">৳ 50</button>
                 </div>
+                <div class="package-item popular">
+                    <div class="pkg-left">
+                        <img src="assets/coins_2.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23FFD700%22/></svg>'" class="pkg-icon">
+                        <span>1200 Coins <span class="badge">Best Seller</span></span>
+                    </div>
+                    <button class="buy-btn">৳ 100</button>
+                </div>
+                <!-- More packages as needed -->
             </div>
         </div>
 
         <!-- Wrong Turn Popup -->
         <div id="wrong-turn-popup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #fff; padding: 20px 40px; border-radius: 15px; font-size: 24px; font-weight: bold; z-index: 9999; text-align: center; box-shadow: 0 0 20px rgba(255, 0, 0, 0.7); animation: wrongShake 0.4s;">
             <div style="font-size: 40px; margin-bottom: 10px;">🙅‍♂️</div>
-            এটি আপনার চাল নয়!
+            এটি আপনার চাল নয়!
         </div>
+
+        <!-- Player Count Modal -->
+        <div id="player-count-modal" class="screen" style="z-index: 200; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; display: none;">
+            <div style="background: var(--bg-panel); padding: 30px; border-radius: 20px; text-align: center; width: 80%; border: 1px solid var(--primary);">
+                <h3 style="margin-bottom: 20px;">কতজন খেলবেন?</h3>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
+                    <button class="btn-primary" onclick="startManualGame(2)" style="width: 50px; height: 50px; font-size: 24px; padding: 0;">২</button>
+                    <button class="btn-primary" onclick="startManualGame(3)" style="width: 50px; height: 50px; font-size: 24px; padding: 0;">৩</button>
+                    <button class="btn-primary" onclick="startManualGame(4)" style="width: 50px; height: 50px; font-size: 24px; padding: 0;">৪</button>
+                </div>
+                <button class="btn-primary" onclick="document.getElementById('player-count-modal').style.display='none'" style="background: #e74c3c; width: 100%;">বাতিল</button>
+            </div>
+        </div>
+
+        <!-- Online Lobby Menu -->
+        <div id="online-lobby-menu" class="screen" style="z-index: 200; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; display: none; position: relative; overflow: hidden;">
+            <img src="assets/bg_dice.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); min-width: 100%; min-height: 100%; opacity: 0.2; mix-blend-mode: screen; pointer-events: none; z-index: 0; object-fit: cover;">
+            <div class="hide-scrollbar" style="background: var(--bg-panel); padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; border: 1px solid var(--primary); z-index: 1; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.9);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">অনলাইন লবি</h3>
+                    <button id="btn-back-to-menu-from-lobby" style="background: transparent; border: none; color: #e74c3c; font-size: 24px; cursor: pointer;">&times;</button>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
+                    <p style="margin: 0; font-size: 14px; color: #ccc;">আপনার আইডি:</p>
+                    <h4 id="my-player-id" style="margin: 5px 0 0 0; color: #2ecc71;">Loading...</h4>
+                </div>
+
+                <!-- Missing Start Game Container -->
+                <div id="start-online-game-container" style="display: none; margin-bottom: 20px; background: rgba(46, 204, 113, 0.1); padding: 15px; border-radius: 12px; border: 1px solid #2ecc71;">
+                    <h4 id="room-joined-msg" style="margin: 0 0 10px 0; color: #f1c40f; text-align: center;"></h4>
+                    <h4 style="margin: 0 0 10px 0; color: #2ecc71;">যুক্ত হওয়া খেলোয়াড়রা:</h4>
+                    <ul id="joined-players-list" style="list-style: none; padding: 0; margin: 0 0 15px 0; display: flex; flex-direction: column; gap: 8px;"></ul>
+                    <button id="btn-start-online-game" class="btn-primary" style="width: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); border: none; font-size: 16px;">গেম শুরু করুন (১/৪ জন যুক্ত)</button>
+                </div>
+
+                <p id="lobby-status" style="color: #f1c40f; font-size: 14px; margin-bottom: 10px;">খেলোয়াড় খোঁজা হচ্ছে...</p>
+                <div id="invite-section" style="margin-bottom: 15px;">
+                    <ul id="online-players-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px;">
+                        <!-- Players will be injected here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invite Modal -->
+        <div id="invite-modal" class="screen" style="z-index: 300; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; display: none; position: fixed;">
+            <div style="background: var(--bg-panel); padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 350px; border: 1px solid var(--primary); box-shadow: 0 10px 40px rgba(0,0,0,0.8); position: relative; overflow: hidden;">
+                <img src="assets/bg_dice.png" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; mix-blend-mode: screen; pointer-events: none; z-index: 0; object-fit: cover;">
+                <div style="position: relative; z-index: 1;">
+                    <div style="font-size: 50px; margin-bottom: 15px; animation: dicePulse 1s infinite alternate;">🎮</div>
+                    <h3 style="margin-bottom: 15px; color: #fff;">গেম ইনভাইট!</h3>
+                    <p style="margin-bottom: 25px; color: #cbd5e1; font-size: 15px;"><span id="inviter-name" style="color: #ffd700; font-weight: bold; font-size: 18px;">কেউ</span> আপনাকে খেলার জন্য আমন্ত্রণ জানিয়েছে!</p>
+                    <div style="display: flex; gap: 15px;">
+                        <button id="btn-decline-invite" style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: rgba(231, 76, 60, 0.2); color: #e74c3c; font-weight: bold; cursor: pointer;">বাতিল</button>
+                        <button id="btn-accept-invite" style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(90deg, #10b981, #059669); color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">খেলুন</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Alert Modal -->
+        <div id="custom-alert-modal" class="screen" style="z-index: 5000; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; display: none; position: fixed;">
+            <div style="background: var(--bg-panel); padding: 30px; border-radius: 20px; text-align: center; width: 80%; max-width: 350px; border: 1px solid var(--primary); box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+                <div style="font-size: 40px; margin-bottom: 15px;">⚠️</div>
+                <h3 style="margin-bottom: 15px; color: #fff;">নোটিশ</h3>
+                <p id="custom-alert-msg" style="margin-bottom: 20px; color: #cbd5e1; font-size: 16px;"></p>
+                <button class="btn-primary" style="width: 100%;">ঠিক আছে</button>
+            </div>
+        </div>
+
+        <!-- Player Name Modal -->
+        <div id="player-name-modal" class="screen" style="z-index: 200; background: rgba(0,0,0,0.9); justify-content: center; align-items: center;">
+            <div style="background: var(--bg-panel); padding: 30px; border-radius: 20px; text-align: center; width: 80%; border: 1px solid var(--primary);">
+                <h3 style="margin-bottom: 20px;">আপনার নাম লিখুন</h3>
+                <input type="text" id="player-name-input" placeholder="আপনার নাম" style="width: 100%; padding: 15px; border-radius: 10px; border: none; margin-bottom: 20px; background: rgba(255,255,255,0.1); color: white; outline: none; text-align: center; font-size: 16px;">
+                <button id="btn-save-name" class="btn-primary" style="width: 100%;">সংরক্ষণ করুন</button>
+            </div>
+        </div>
+
     </div>
-    
-    <script src="ludo.js?v=2"></script>
+    <script src="ludo.js?v=5"></script>
+    <script>
+        // Check for saved name, otherwise ask
+        setTimeout(() => {
+            let savedName = localStorage.getItem('ludoPlayerName');
+            if (!savedName) {
+                navigateTo('player-name-modal');
+            } else {
+                document.getElementById('user-name-display').innerText = savedName;
+                navigateTo('screen-home');
+            }
+        }, 3000); // 3 seconds loading
+
+        document.getElementById('btn-save-name').addEventListener('click', () => {
+            let name = document.getElementById('player-name-input').value.trim();
+            if (name) {
+                localStorage.setItem('ludoPlayerName', name);
+                document.getElementById('user-name-display').innerText = name;
+                navigateTo('screen-home');
+            }
+        });
+    </script>
 </body>
 </html>
