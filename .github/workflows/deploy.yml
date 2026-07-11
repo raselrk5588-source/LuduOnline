@@ -18,4 +18,6 @@ jobs:
           script: |
             cd /var/www/gameadda.rtsquad.com
             git config --global --add safe.directory /var/www/gameadda.rtsquad.com
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
