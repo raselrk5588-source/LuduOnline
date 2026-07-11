@@ -11,71 +11,118 @@ body {
     overflow: hidden;
 }
 
-header {
+
+
+/* In-Game HUD */
+#game-hud {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    max-width: 800px;
+    height: 100%;
+    pointer-events: none; /* Let clicks pass through to canvas */
+    z-index: 20;
+    font-family: Arial, sans-serif;
+}
+
+#game-hud > * {
+    pointer-events: auto; /* Enable clicks on HUD elements */
+}
+
+/* Top Bar */
+.hud-top {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    background: linear-gradient(90deg, rgba(31,40,51,0.9), rgba(11,12,16,0.95));
-    border-bottom: 2px solid #45a29e;
-    box-shadow: 0 4px 20px rgba(102, 252, 241, 0.2);
-    border-radius: 0 0 20px 20px;
-    margin-bottom: 15px;
-    z-index: 100;
+    align-items: flex-start;
 }
 
-.back-btn {
+.pause-btn {
+    background: linear-gradient(180deg, #1c3d5a, #0b1a2a);
+    color: #4facfe;
+    border: 2px solid #00f2fe;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     text-decoration: none;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+    transition: 0.2s;
+}
+.pause-btn:active { transform: scale(0.9); }
+
+.boss-hud {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40%;
+}
+.boss-title {
     color: #fff;
-    background: linear-gradient(45deg, #ff416c, #ff4b2b);
-    padding: 8px 18px;
-    border-radius: 25px;
     font-weight: bold;
     font-size: 14px;
-    box-shadow: 0 4px 10px rgba(255, 65, 108, 0.4);
-    transition: all 0.3s ease;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
 }
-
-.back-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(255, 65, 108, 0.6);
+.health-bar-container {
+    width: 100%;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid #444;
+    border-radius: 4px;
+    height: 16px;
+    position: relative;
+    overflow: hidden;
 }
-
-h1 {
-    color: #fff;
-    font-size: 28px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 5px #fff, 0 0 15px #66fcf1, 0 0 30px #45a29e;
-    animation: neonPulse 1.5s infinite alternate;
-}
-
-@keyframes neonPulse {
-    from { text-shadow: 0 0 5px #fff, 0 0 10px #66fcf1, 0 0 20px #66fcf1, 0 0 40px #45a29e; }
-    to { text-shadow: 0 0 2px #fff, 0 0 5px #66fcf1, 0 0 10px #66fcf1, 0 0 20px #45a29e; }
-}
-
-.score-board {
-    font-size: 20px;
+.health-fill {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
     font-weight: bold;
-    color: #ffeb3b;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: 1px solid #ffeb3b;
-    box-shadow: 0 0 10px rgba(255, 235, 59, 0.4), inset 0 0 8px rgba(255, 235, 59, 0.2);
-    font-family: monospace; /* arcade feel */
+    transition: width 0.2s;
 }
+.boss-health .health-fill {
+    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+}
+
+.score-container {
+    text-align: right;
+    color: #fff;
+}
+.score-label {
+    color: #a0b0c0;
+    font-size: 12px;
+}
+.score-val {
+    color: #ffeb3b;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 235, 59, 0.5);
+}
+.coin-val {
+    font-size: 14px;
+    margin-top: 5px;
+    font-weight: bold;
+}
+.coin-icon {
+    font-size: 16px;
+}
+
+
 
 #game-container {
     position: relative;
     width: 100%;
     max-width: 600px;
-    height: 80vh;
-    border: 2px solid #45a29e;
-    box-shadow: 0 0 20px rgba(69, 162, 158, 0.5);
-    background: #000;
+    height: 100vh;
+    background: url('game_bg.png') center/cover no-repeat;
 }
 
 canvas {
@@ -91,7 +138,6 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(11, 12, 16, 0.85);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -99,6 +145,149 @@ canvas {
     text-align: center;
     z-index: 10;
 }
+
+#game-over {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 50;
+}
+
+.game-over-modal {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+    border: 2px solid #ff416c;
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 0 0 30px rgba(255, 65, 108, 0.5), inset 0 0 20px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 80%;
+    max-width: 400px;
+    animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.game-over-title {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-weight: 700;
+    font-size: 42px;
+    color: #ff416c;
+    text-transform: uppercase;
+    text-shadow: 0 0 15px rgba(255, 65, 108, 0.8);
+    margin: 0;
+    line-height: 1;
+}
+
+.game-over-score {
+    font-size: 24px;
+    color: #cbd5e1;
+    margin: 0;
+    text-align: center;
+}
+
+.final-score-val {
+    font-size: 56px;
+    font-weight: bold;
+    color: #ffeb3b;
+    text-shadow: 0 0 20px rgba(255, 235, 59, 0.6);
+    display: block;
+    margin-top: 10px;
+}
+
+/* Image Start Screen */
+.bg-image-screen {
+    background: url('bg.png') center/cover no-repeat;
+    justify-content: flex-end !important;
+    padding-bottom: 50px;
+}
+
+/* Logo */
+.logo-container {
+    position: absolute;
+    top: 15%;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.bangla-logo {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-weight: 700;
+    font-size: 56px;
+    color: #e0e0e0;
+    background: linear-gradient(to bottom, #ffffff, #a0b0c0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(0, 150, 255, 0.8));
+    margin-bottom: -15px;
+    line-height: 1;
+}
+.bangla-subtitle {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-weight: 700;
+    font-size: 48px;
+    background: linear-gradient(to bottom, #4facfe, #00f2fe);
+    -webkit-background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.8));
+    margin-bottom: 15px;
+    line-height: 1;
+}
+.logo-wings {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 250px;
+    height: 30px;
+    position: relative;
+}
+.wing {
+    width: 100px;
+    height: 8px;
+    background: linear-gradient(90deg, transparent, #00f2fe);
+    position: absolute;
+}
+.wing.left-wing { left: 0; transform: skewX(45deg); }
+.wing.right-wing { right: 0; background: linear-gradient(-90deg, transparent, #00f2fe); transform: skewX(-45deg); }
+.center-shield {
+    width: 40px;
+    height: 20px;
+    background: #00f2fe;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    box-shadow: 0 0 15px #00f2fe;
+}
+
+/* Play Button */
+.play-btn {
+    background: linear-gradient(180deg, #ffcc00, #d87b00);
+    color: white;
+    font-size: 28px;
+    padding: 15px 30px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.6);
+    box-shadow: 0 0 20px rgba(255, 170, 0, 0.8), inset 0 0 10px rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 700;
+    font-family: 'Hind Siliguri', sans-serif;
+    cursor: pointer;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    width: max-content;
+    min-width: 200px;
+    transition: transform 0.2s;
+    z-index: 10;
+    margin-bottom: 10px;
+}
+.play-btn:hover {
+    transform: scale(1.05);
+}
+.play-icon { font-size: 24px; margin-top: 2px; }
 
 .hidden {
     display: none !important;
@@ -136,27 +325,6 @@ button:hover {
 
 @media (max-width: 600px) {
     #game-container {
-        height: 75vh;
-        border-left: none;
-        border-right: none;
-    }
-    header {
-        flex-wrap: wrap;
-        padding: 10px;
-        margin-bottom: 10px;
-    }
-    .back-btn {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    h1 {
-        font-size: 22px;
-        flex: 1;
-        text-align: left;
-    }
-    .score-board {
-        font-size: 16px;
-        padding: 5px 10px;
+        height: 100vh;
     }
 }

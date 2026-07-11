@@ -19,12 +19,15 @@ let score = 0;
 let animationId;
 let frameCount = 0;
 
+const playerImg = new Image();
+playerImg.src = 'player.png';
+
 // Game Objects
 let player = {
-    x: canvas.width / 2 - 20,
-    y: canvas.height - 60,
-    width: 40,
-    height: 40,
+    x: canvas.width / 2 - 45,
+    y: canvas.height - 120,
+    width: 90,
+    height: 100,
     speed: 6,
     dx: 0
 };
@@ -55,76 +58,34 @@ canvas.addEventListener('touchend', e => {
     player.dx = 0;
 });
 
-function initStars() {
-    stars = [];
-    for(let i=0; i<100; i++) {
-        stars.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 2,
-            speed: Math.random() * 2 + 0.5
-        });
-    }
-}
-
-function drawStars() {
-    ctx.fillStyle = 'white';
-    stars.forEach(star => {
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-        star.y += star.speed;
-        if(star.y > canvas.height) {
-            star.y = 0;
-            star.x = Math.random() * canvas.width;
-        }
-    });
-}
+// Removed old star logic
 
 function drawPlayer() {
     ctx.save();
-    // Translate to the center of the player
     ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
     
-    // Rotate -45 degrees to make the standard 🚀 emoji point straight up
-    ctx.rotate(-45 * Math.PI / 180);
-    
-    // Draw Custom Engine Flame (flickering/shaking) underneath
-    if (isPlaying) {
-        ctx.fillStyle = (Math.random() > 0.5) ? '#ff4b2b' : '#ffeb3b';
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = '#ff416c';
-        
-        let flameHeight = 15 + Math.random() * 15; // Random height for flickering
-        let shakeX = (Math.random() - 0.5) * 4; // Slight horizontal shake for the fire only
-        
-        ctx.beginPath();
-        // Since canvas is rotated to make rocket point UP (-Y), the bottom is DOWN (+Y)
-        ctx.moveTo(-6, 12); 
-        ctx.lineTo(6, 12);
-        ctx.lineTo(shakeX, 12 + flameHeight);
-        ctx.closePath();
-        ctx.fill();
-        ctx.shadowBlur = 0;
+    // Draw the exact image provided by the user
+    try {
+        ctx.globalCompositeOperation = 'screen';
+        ctx.drawImage(playerImg, -player.width / 2, -player.height / 2, player.width, player.height);
+        ctx.globalCompositeOperation = 'source-over';
+    } catch (e) {
+        // Fallback if image not loaded yet
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(-10, -10, 20, 20);
     }
 
-    ctx.font = "40px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    
-    // Draw the rocket perfectly still
-    ctx.fillText("🚀", 0, 0);
     ctx.restore();
 }
 
 function fireBullet() {
     if(isPlaying) {
         bullets.push({
-            x: player.x + player.width/2 - 2,
-            y: player.y,
-            width: 4,
-            height: 15,
-            speed: 8
+            x: player.x + player.width/2 - 3,
+            y: player.y - 10,
+            width: 6,
+            height: 25,
+            speed: 12
         });
     }
 }
@@ -213,6 +174,7 @@ function update() {
                 bullets.splice(j, 1);
                 score += 10;
                 scoreEl.innerText = score;
+                document.getElementById('coins').innerText = Math.floor(score / 50); // 1 coin every 50 points
                 break;
             }
         }
@@ -223,39 +185,60 @@ function update() {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawStars();
     
     if(!isPlaying) {
-        // Still draw player in background for start screen aesthetics
         drawPlayer();
         return;
     }
 
     drawPlayer();
 
-    // Draw bullets
-    ctx.fillStyle = '#f1c40f';
+    // Draw glowing laser bullets
+    ctx.fillStyle = '#00f2fe';
     bullets.forEach(b => {
-        ctx.fillRect(b.x, b.y, b.width, b.height);
-        // glowing effect
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#f1c40f';
-        ctx.fillRect(b.x, b.y, b.width, b.height);
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00f2fe';
+        ctx.beginPath();
+        ctx.moveTo(b.x + b.width/2, b.y);
+        ctx.lineTo(b.x + b.width, b.y + b.height);
+        ctx.lineTo(b.x, b.y + b.height);
+        ctx.closePath();
+        ctx.fill();
         ctx.shadowBlur = 0;
     });
 
-    // Draw enemies (Alien shapes)
+    // Draw aggressive enemies
     enemies.forEach(e => {
-        ctx.fillStyle = e.color;
+        ctx.save();
+        ctx.translate(e.x + e.width/2, e.y + e.height/2);
+        
+        // Ship Body
+        ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        // Alien UFO shape
-        ctx.ellipse(e.x + e.width/2, e.y + e.height/2, e.width/2, e.height/4, 0, 0, Math.PI * 2);
+        ctx.moveTo(0, e.height/2); // Nose pointing down
+        ctx.lineTo(e.width/2, -e.height/4); // Right wing
+        ctx.lineTo(e.width/4, -e.height/2);
+        ctx.lineTo(-e.width/4, -e.height/2);
+        ctx.lineTo(-e.width/2, -e.height/4); // Left wing
+        ctx.closePath();
         ctx.fill();
         
+        // Glowing Red Thrusters
+        ctx.fillStyle = '#ff416c';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ff416c';
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.ellipse(e.x + e.width/2, e.y + e.height*0.3, e.width/3, e.height/4, 0, 0, Math.PI * 2);
+        ctx.arc(0, -e.height/2, e.width/6, Math.PI, 0);
         ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Core Eye
+        ctx.fillStyle = '#ff4b2b';
+        ctx.beginPath();
+        ctx.arc(0, 0, e.width/8, 0, Math.PI*2);
+        ctx.fill();
+        
+        ctx.restore();
     });
 }
 
@@ -267,16 +250,18 @@ function gameLoop() {
 
 function startGame() {
     resizeCanvas();
-    player.x = canvas.width / 2 - 20;
-    player.y = canvas.height - 60;
+    player.x = canvas.width / 2 - 45;
+    player.y = canvas.height - 120;
     bullets = [];
     enemies = [];
     score = 0;
     frameCount = 0;
     scoreEl.innerText = score;
+    document.getElementById('coins').innerText = '0';
     isPlaying = true;
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
+    document.getElementById('game-hud').style.display = 'block';
 }
 
 function gameOver() {
@@ -288,6 +273,5 @@ function gameOver() {
 startBtn.addEventListener('click', startGame);
 restartBtn.addEventListener('click', startGame);
 
-initStars();
-drawStars(); // Draw once for the start screen
+// No stars needed
 gameLoop();

@@ -13,23 +13,55 @@
     </script>
 </head>
 <body>
-    <header>
-        <a href="../../index.html" class="back-btn">⬅ প্লাটফর্মে ফেরত যান</a>
-        <h1>স্পেস শুটার 🚀</h1>
-        <div class="score-board">স্কোর: <span id="score">0</span></div>
-    </header>
-
     <div id="game-container">
+        <!-- In-Game HUD Overlay -->
+        <div id="game-hud" style="display: none;">
+            <!-- Top Bar -->
+            <div class="hud-top">
+                <a href="../../index.html" class="pause-btn" style="font-size: 24px; font-weight: bold; padding-bottom: 4px;">❮</a>
+                
+                <div class="boss-hud hidden" id="boss-hud">
+                    <div class="boss-title">BOSS</div>
+                    <div class="health-bar-container boss-health">
+                        <div class="health-fill" id="boss-health-fill" style="width: 100%;">100%</div>
+                    </div>
+                </div>
+                
+                <div class="score-container">
+                    <div class="score-label">Score</div>
+                    <div class="score-val" id="score">0</div>
+                    <div class="coin-val"><span class="coin-icon">🪙</span> x <span id="coins">0</span></div>
+                </div>
+            </div>
+
+
+        </div>
+
         <canvas id="gameCanvas"></canvas>
         <div id="game-over" class="hidden">
-            <h2>গেম ওভার!</h2>
-            <p>আপনার স্কোর: <span id="final-score">0</span></p>
-            <button id="restart-btn">আবার খেলুন</button>
+            <div class="game-over-modal">
+                <h2 class="game-over-title">গেম ওভার!</h2>
+                <p class="game-over-score">আপনার স্কোর: <br><span id="final-score" class="final-score-val">0</span></p>
+                <button id="restart-btn" class="play-btn">
+                    <span class="play-icon">↻</span> আবার খেলুন
+                </button>
+            </div>
         </div>
-        <div id="start-screen">
-            <h2>এলিয়েনদের ধ্বংস করুন!</h2>
-            <p>ডানে-বামে সরাতে 'অ্যারো-কি' এবং গুলি করতে 'স্পেসবার' চাপুন।</p>
-            <button id="start-btn">খেলা শুরু করুন</button>
+        <div id="start-screen" class="bg-image-screen">
+            <a href="../../index.html" style="position:absolute; top:20px; left:20px; color:white; font-size:28px; text-decoration:none; font-weight:bold; z-index:100; text-shadow: 0 0 10px rgba(0,242,254,0.8);">❮</a>
+            <div class="logo-container">
+                <div class="logo-text bangla-logo">স্পেস</div>
+                <div class="logo-text subtitle bangla-subtitle">শুটার</div>
+                <div class="logo-wings">
+                    <div class="wing left-wing"></div>
+                    <div class="wing right-wing"></div>
+                    <div class="center-shield"></div>
+                </div>
+            </div>
+
+            <button id="start-btn" class="play-btn">
+                <span class="play-icon">▶</span> খেলুন
+            </button>
         </div>
     </div>
 

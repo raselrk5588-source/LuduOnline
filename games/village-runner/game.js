@@ -2,6 +2,7 @@
 let scene, camera, renderer;
 let player;
 let obstacles = [];
+let coins = [];
 let scenery = [];
 let lanes = [-3, 0, 3]; // Left, Middle, Right lane x-coordinates
 let currentLane = 1; // Middle lane
@@ -76,83 +77,131 @@ function init() {
 }
 
 function createEnvironment() {
-    // Grass Ground
-    const grassGeo = new THREE.PlaneGeometry(200, 400);
-    const grassMat = new THREE.MeshLambertMaterial({ color: 0x3b7a33 });
-    const grass = new THREE.Mesh(grassGeo, grassMat);
-    grass.rotation.x = -Math.PI / 2;
-    grass.position.z = -100;
-    grass.receiveShadow = true;
-    scene.add(grass);
+    // City Street Base
+    const streetGeo = new THREE.PlaneGeometry(200, 400);
+    const streetMat = new THREE.MeshLambertMaterial({ map: createRoadTexture() }); // Use stone texture
+    const street = new THREE.Mesh(streetGeo, streetMat);
+    street.rotation.x = -Math.PI / 2;
+    street.position.z = -100;
+    street.receiveShadow = true;
+    scene.add(street);
 
-    // Dirt Road
-    const roadGeo = new THREE.PlaneGeometry(12, 400);
-    const roadMat = new THREE.MeshLambertMaterial({ color: 0x8b5a2b });
-    const road = new THREE.Mesh(roadGeo, roadMat);
-    road.rotation.x = -Math.PI / 2;
-    road.position.z = -100;
-    road.position.y = 0.01; // Slightly above grass
-    road.receiveShadow = true;
-    scene.add(road);
+    // Left Sidewalk
+    const leftSidewalkGeo = new THREE.BoxGeometry(90, 0.5, 400);
+    const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0x888888 }); // Lighter gray concrete
+    const leftSidewalk = new THREE.Mesh(leftSidewalkGeo, sidewalkMat);
+    leftSidewalk.position.set(-52, 0.25, -100);
+    leftSidewalk.receiveShadow = true;
+    scene.add(leftSidewalk);
+
+    // Right Sidewalk
+    const rightSidewalkGeo = new THREE.BoxGeometry(90, 0.5, 400);
+    const rightSidewalk = new THREE.Mesh(rightSidewalkGeo, sidewalkMat);
+    rightSidewalk.position.set(52, 0.25, -100);
+    rightSidewalk.receiveShadow = true;
+    scene.add(rightSidewalk);
 }
 
 function spawnScenery(initial = false) {
-    // Add trees on the sides
-    const treeGroup = new THREE.Group();
+    const sceneryGroup = new THREE.Group();
     
-    // Trunk
-    const trunkGeo = new THREE.CylinderGeometry(0.5, 0.5, 3);
-    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    trunk.position.y = 1.5;
-    trunk.castShadow = true;
-    treeGroup.add(trunk);
+    // Building
+    const width = 4 + Math.random() * 4;
+    const height = 10 + Math.random() * 15;
+    const depth = 5 + Math.random() * 5;
+    const buildGeo = new THREE.BoxGeometry(width, height, depth);
+    
+    // Warm town colors
+    const colors = ['#d2b48c', '#f4a460', '#cd853f', '#deb887', '#bc8f8f', '#8b4513'];
+    const buildColor = colors[Math.floor(Math.random() * colors.length)];
+    const buildMat = new THREE.MeshLambertMaterial({ map: createBuildingTexture(buildColor) });
+    
+    const building = new THREE.Mesh(buildGeo, buildMat);
+    building.position.y = height / 2;
+    building.castShadow = true;
+    sceneryGroup.add(building);
 
-    // Leaves
-    const leavesGeo = new THREE.SphereGeometry(2, 8, 8);
-    const leavesMat = new THREE.MeshLambertMaterial({ color: 0x228b22 });
-    const leaves = new THREE.Mesh(leavesGeo, leavesMat);
-    leaves.position.y = 4;
-    leaves.castShadow = true;
-    treeGroup.add(leaves);
+    // Roof
+    const roofGeo = new THREE.ConeGeometry(width/1.2, 4, 4);
+    const roofMat = new THREE.MeshLambertMaterial({ color: 0x8b0000 }); // Dark red/brown roof
+    const roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.y = height + 2;
+    roof.rotation.y = Math.PI / 4;
+    roof.castShadow = true;
+    sceneryGroup.add(roof);
 
-    // Random placement on sides
+    // Random placement on sides (on sidewalks)
     let side = Math.random() > 0.5 ? 1 : -1;
-    treeGroup.position.x = side * (8 + Math.random() * 10);
-    treeGroup.position.z = initial ? (-Math.random() * 150) : -150;
+    sceneryGroup.position.x = side * (12 + Math.random() * 5);
+    sceneryGroup.position.z = initial ? (-Math.random() * 150) : -150;
     
-    scene.add(treeGroup);
-    scenery.push(treeGroup);
+    scene.add(sceneryGroup);
+    scenery.push(sceneryGroup);
+
+    // Also spawn a road line segment!
+    const lineGeo = new THREE.PlaneGeometry(0.2, 4);
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    
+    const leftLine = new THREE.Mesh(lineGeo, lineMat);
+    leftLine.rotation.x = -Math.PI / 2;
+    leftLine.position.set(-1.5, 0.05, sceneryGroup.position.z);
+    scene.add(leftLine);
+    scenery.push(leftLine);
+
+    const rightLine = new THREE.Mesh(lineGeo, lineMat);
+    rightLine.rotation.x = -Math.PI / 2;
+    rightLine.position.set(1.5, 0.05, sceneryGroup.position.z);
+    scene.add(rightLine);
+    scenery.push(rightLine);
 }
 
 function createPlayer() {
     player = new THREE.Group();
     const catColor = 0xff8c00; // Orange cat
+    const hoodieColor = 0xcc0000;
+    const jeansColor = 0x1e90ff;
+    const shoesColor = 0xffffff;
 
-    // Body
+    // Body (Red Hoodie)
     const bodyGeo = new THREE.BoxGeometry(0.8, 0.6, 1.2);
-    const bodyMat = new THREE.MeshLambertMaterial({ color: catColor });
+    const bodyMat = new THREE.MeshLambertMaterial({ color: hoodieColor });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.6;
     body.castShadow = true;
     player.add(body);
 
+    // Paw Print Logo on Back of Hoodie
+    const logoMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const pad1 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), logoMat);
+    pad1.position.set(0, 0.65, 0.61);
+    player.add(pad1);
+    const pad2 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), logoMat);
+    pad2.position.set(-0.15, 0.75, 0.61);
+    player.add(pad2);
+    const pad3 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), logoMat);
+    pad3.position.set(0, 0.8, 0.61);
+    player.add(pad3);
+    const pad4 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), logoMat);
+    pad4.position.set(0.15, 0.75, 0.61);
+    player.add(pad4);
+
     // Head
     const headGeo = new THREE.BoxGeometry(0.7, 0.6, 0.7);
-    const head = new THREE.Mesh(headGeo, bodyMat);
+    const headMat = new THREE.MeshLambertMaterial({ color: catColor });
+    const head = new THREE.Mesh(headGeo, headMat);
     head.position.set(0, 0.9, -0.7);
     head.castShadow = true;
     player.add(head);
 
     // Ears
     const earGeo = new THREE.ConeGeometry(0.15, 0.3, 4);
-    const leftEar = new THREE.Mesh(earGeo, bodyMat);
+    const leftEar = new THREE.Mesh(earGeo, headMat);
     leftEar.position.set(-0.25, 1.3, -0.7);
     leftEar.rotation.y = Math.PI / 4;
     leftEar.castShadow = true;
     player.add(leftEar);
 
-    const rightEar = new THREE.Mesh(earGeo, bodyMat);
+    const rightEar = new THREE.Mesh(earGeo, headMat);
     rightEar.position.set(0.25, 1.3, -0.7);
     rightEar.rotation.y = Math.PI / 4;
     rightEar.castShadow = true;
@@ -175,35 +224,63 @@ function createPlayer() {
     nose.position.set(0, 0.85, -1.06);
     player.add(nose);
 
+    // Snout (White part around nose)
+    const snoutGeo = new THREE.BoxGeometry(0.3, 0.2, 0.1);
+    const snoutMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const snout = new THREE.Mesh(snoutGeo, snoutMat);
+    snout.position.set(0, 0.75, -1.06);
+    player.add(snout);
+
     // Tail
     const tailGeo = new THREE.BoxGeometry(0.1, 0.8, 0.1);
-    const tail = new THREE.Mesh(tailGeo, bodyMat);
+    const tail = new THREE.Mesh(tailGeo, headMat);
     tail.position.set(0, 0.9, 0.6);
     tail.rotation.x = Math.PI / 4;
     tail.castShadow = true;
     player.add(tail);
 
-    // Legs
+    // Legs (Jeans)
     const legGeo = new THREE.BoxGeometry(0.2, 0.4, 0.2);
-    const fLL = new THREE.Mesh(legGeo, bodyMat);
+    const legMat = new THREE.MeshLambertMaterial({ color: jeansColor });
+    const fLL = new THREE.Mesh(legGeo, legMat);
     fLL.position.set(-0.25, 0.2, -0.4);
     fLL.castShadow = true;
     player.add(fLL);
 
-    const fRL = new THREE.Mesh(legGeo, bodyMat);
+    const fRL = new THREE.Mesh(legGeo, legMat);
     fRL.position.set(0.25, 0.2, -0.4);
     fRL.castShadow = true;
     player.add(fRL);
 
-    const bLL = new THREE.Mesh(legGeo, bodyMat);
+    const bLL = new THREE.Mesh(legGeo, legMat);
     bLL.position.set(-0.25, 0.2, 0.4);
     bLL.castShadow = true;
     player.add(bLL);
 
-    const bRL = new THREE.Mesh(legGeo, bodyMat);
+    const bRL = new THREE.Mesh(legGeo, legMat);
     bRL.position.set(0.25, 0.2, 0.4);
     bRL.castShadow = true;
     player.add(bRL);
+
+    // Shoes (White)
+    const shoeGeo = new THREE.BoxGeometry(0.22, 0.1, 0.25);
+    const shoeMat = new THREE.MeshLambertMaterial({ color: shoesColor });
+    
+    const fLS = new THREE.Mesh(shoeGeo, shoeMat);
+    fLS.position.set(0, -0.2, -0.05);
+    fLL.add(fLS);
+
+    const fRS = new THREE.Mesh(shoeGeo, shoeMat);
+    fRS.position.set(0, -0.2, -0.05);
+    fRL.add(fRS);
+
+    const bLS = new THREE.Mesh(shoeGeo, shoeMat);
+    bLS.position.set(0, -0.2, -0.05);
+    bLL.add(bLS);
+
+    const bRS = new THREE.Mesh(shoeGeo, shoeMat);
+    bRS.position.set(0, -0.2, -0.05);
+    bRL.add(bRS);
 
     player.userData.legs = [fLL, fRL, bLL, bRL];
     player.userData.tail = tail;
@@ -223,46 +300,63 @@ function spawnObstacle() {
     let obsGroup = new THREE.Group();
     
     if (type === 0) {
-        // Rock (Block)
-        const geo = new THREE.DodecahedronGeometry(1.2);
-        const mat = new THREE.MeshLambertMaterial({ color: 0x696969 });
+        // Wooden Crate (Block)
+        const geo = new THREE.BoxGeometry(2, 2, 2);
+        const mat = new THREE.MeshLambertMaterial({ map: createCrateTexture() });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.y = 1;
         mesh.castShadow = true;
+        
+        // Inner darker box for border effect
+        const innerGeo = new THREE.BoxGeometry(1.9, 1.9, 2.1);
+        const innerMat = new THREE.MeshBasicMaterial({ color: 0x3d2314 });
+        const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+        mesh.add(innerMesh);
+
         obsGroup.add(mesh);
         obsGroup.userData.type = 'block';
     } else if (type === 1) {
-        // Hole in the road (Jump over)
-        // Visually represented as a dark patch
-        const geo = new THREE.PlaneGeometry(3, 3);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x221100 });
+        // Low Barricade (Jump over)
+        const geo = new THREE.BoxGeometry(3, 1, 0.5);
+        const mat = new THREE.MeshLambertMaterial({ color: 0xff4500 });
         const mesh = new THREE.Mesh(geo, mat);
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.position.y = 0.02; // Just above road
-        obsGroup.add(mesh);
-        obsGroup.userData.type = 'hole';
-    } else if (type === 2) {
-        // Fallen tree (Slide under)
-        const geo = new THREE.CylinderGeometry(0.6, 0.6, 3.5);
-        const mat = new THREE.MeshLambertMaterial({ color: 0x4a3728 });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.rotation.z = Math.PI / 2; // Horizontal
-        mesh.position.y = 2.5; // High up so player can slide under
+        mesh.position.y = 0.5;
         mesh.castShadow = true;
         obsGroup.add(mesh);
+        obsGroup.userData.type = 'hole'; // Reuse jump logic
+    } else if (type === 2) {
+        // High Barrier (Slide under)
+        const geo = new THREE.BoxGeometry(3.5, 1, 0.5);
+        const mat = new THREE.MeshLambertMaterial({ color: 0xff4500 }); // Orange
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.y = 2.5; // High up so player can slide under
+        mesh.castShadow = true;
         
-        // Two stumps supporting it
-        const stumpGeo = new THREE.CylinderGeometry(0.3, 0.3, 2.5);
-        const leftStump = new THREE.Mesh(stumpGeo, mat);
-        leftStump.position.set(-1.5, 1.25, 0);
-        leftStump.castShadow = true;
+        // White stripes
+        const stripeGeo = new THREE.BoxGeometry(0.5, 1.05, 0.55);
+        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const stripe1 = new THREE.Mesh(stripeGeo, stripeMat);
+        stripe1.position.set(-1, 0, 0);
+        const stripe2 = new THREE.Mesh(stripeGeo, stripeMat);
+        stripe2.position.set(1, 0, 0);
+        mesh.add(stripe1);
+        mesh.add(stripe2);
         
-        const rightStump = new THREE.Mesh(stumpGeo, mat);
-        rightStump.position.set(1.5, 1.25, 0);
-        rightStump.castShadow = true;
+        obsGroup.add(mesh);
+        
+        // Two side poles supporting it
+        const poleGeo = new THREE.CylinderGeometry(0.1, 0.1, 3);
+        const poleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+        const leftPole = new THREE.Mesh(poleGeo, poleMat);
+        leftPole.position.set(-1.5, 1.5, 0);
+        leftPole.castShadow = true;
+        
+        const rightPole = new THREE.Mesh(poleGeo, poleMat);
+        rightPole.position.set(1.5, 1.5, 0);
+        rightPole.castShadow = true;
 
-        obsGroup.add(leftStump);
-        obsGroup.add(rightStump);
+        obsGroup.add(leftPole);
+        obsGroup.add(rightPole);
         
         obsGroup.userData.type = 'high';
     }
@@ -381,6 +475,24 @@ function updatePlayer() {
             jumpVelocity = 0;
         }
     }
+
+    // Leg and Tail animation
+    if (!isJumping && !isSliding) {
+        const time = Date.now() * 0.015 * gameSpeed;
+        if (player.userData.legs) {
+            player.userData.legs[0].rotation.x = Math.sin(time) * 0.6; // fLL
+            player.userData.legs[1].rotation.x = Math.sin(time + Math.PI) * 0.6; // fRL
+            player.userData.legs[2].rotation.x = Math.sin(time + Math.PI) * 0.6; // bLL
+            player.userData.legs[3].rotation.x = Math.sin(time) * 0.6; // bRL
+        }
+        if (player.userData.tail) {
+            player.userData.tail.rotation.z = Math.sin(time * 0.5) * 0.3;
+        }
+    } else {
+        if (player.userData.legs) {
+            player.userData.legs.forEach(leg => leg.rotation.x = 0);
+        }
+    }
 }
 
 function updateEnvironment() {
@@ -423,6 +535,30 @@ function updateEnvironment() {
             scenery.splice(i, 1);
         }
     }
+
+    // Update Coins
+    for (let i = coins.length - 1; i >= 0; i--) {
+        let coin = coins[i];
+        coin.position.z += gameSpeed;
+        coin.rotation.z += 0.05;
+
+        if (coin.position.z > -1.5 && coin.position.z < 1.5) {
+            if (Math.abs(coin.position.x - player.position.x) < 1.0) {
+                if (player.position.y < 2) { // Collect coin
+                    score += 10;
+                    scoreVal.innerText = Math.floor(score);
+                    scene.remove(coin);
+                    coins.splice(i, 1);
+                    continue;
+                }
+            }
+        }
+
+        if (coin.position.z > 10) {
+            scene.remove(coin);
+            coins.splice(i, 1);
+        }
+    }
 }
 
 function startGame() {
@@ -436,6 +572,9 @@ function startGame() {
     scenery.forEach(tree => scene.remove(tree));
     scenery = [];
     for(let i=0; i<10; i++) spawnScenery(true);
+
+    coins.forEach(c => scene.remove(c));
+    coins = [];
 
     currentLane = 1;
     player.position.set(lanes[currentLane], playerY, 0);
@@ -483,6 +622,10 @@ function animate() {
             spawnScenery();
         }
 
+        if (Math.random() < 0.03) {
+            spawnCoin();
+        }
+
         // Score increases slightly faster
         distance += gameSpeed * 1.5;
         score = Math.floor(distance / 10);
@@ -509,6 +652,137 @@ function animate() {
     }
 
     renderer.render(scene, camera);
+}
+
+// --- Texture Generators ---
+function createRoadTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#4a4d53';
+    ctx.fillRect(0, 0, 512, 512);
+    
+    ctx.strokeStyle = '#3a3c40';
+    ctx.lineWidth = 4;
+    for(let y = 0; y < 512; y += 64) {
+        for(let x = 0; x < 512; x += 128) {
+            let offset = (y / 64) % 2 === 0 ? 0 : 64;
+            ctx.strokeRect(x - offset, y, 128, 64);
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            ctx.fillRect(x - offset + 4, y + 4, 120, 56);
+        }
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(4, 20);
+    return texture;
+}
+
+function createBuildingTexture(colorStr) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = colorStr;
+    ctx.fillRect(0, 0, 256, 256);
+    
+    // Windows
+    ctx.fillStyle = '#ffffe0'; // warm glowing light
+    for(let y = 30; y < 250; y += 40) {
+        for(let x = 20; x < 230; x += 40) {
+            if(Math.random() > 0.3) {
+                ctx.fillRect(x, y, 20, 25);
+            } else {
+                ctx.fillStyle = '#222';
+                ctx.fillRect(x, y, 20, 25);
+                ctx.fillStyle = '#ffffe0';
+            }
+        }
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    return texture;
+}
+
+function createCrateTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#b08d6a';
+    ctx.fillRect(0, 0, 256, 256);
+    
+    ctx.strokeStyle = '#5e4024';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, 246, 246);
+    
+    // Cross
+    ctx.beginPath();
+    ctx.moveTo(10, 10);
+    ctx.lineTo(246, 246);
+    ctx.moveTo(246, 10);
+    ctx.lineTo(10, 246);
+    ctx.stroke();
+    
+    // Planks
+    ctx.lineWidth = 2;
+    for(let i=20; i<256; i+=20) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(256, i);
+        ctx.stroke();
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+}
+
+function createPawTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#ffd700'; // gold
+    ctx.fillRect(0, 0, 128, 128);
+    
+    ctx.fillStyle = '#ccaa00'; // dark gold
+    // Main pad
+    ctx.beginPath(); ctx.arc(64, 80, 20, 0, Math.PI*2); ctx.fill();
+    // Toes
+    ctx.beginPath(); ctx.arc(35, 50, 12, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(64, 40, 12, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(93, 50, 12, 0, Math.PI*2); ctx.fill();
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+}
+
+function spawnCoin() {
+    if (!isPlaying) return;
+
+    // Pick a random lane
+    const laneIndex = Math.floor(Math.random() * 3);
+    const xPos = lanes[laneIndex];
+
+    const coinGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
+    const coinMat = new THREE.MeshLambertMaterial({ map: createPawTexture() }); // Use Paw texture!
+    const coin = new THREE.Mesh(coinGeo, coinMat);
+    
+    coin.rotation.x = Math.PI / 2; // Stand upright
+    coin.position.set(xPos, 0.6, -100);
+    coin.castShadow = true;
+    
+    scene.add(coin);
+    coins.push(coin);
 }
 
 init();

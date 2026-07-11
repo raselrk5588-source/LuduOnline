@@ -18,16 +18,18 @@
         
         <!-- UI Layer -->
         <div id="ui-layer">
-            <a href="../../index.html" id="back-btn">⬅ প্লাটফর্মে ফেরত যান</a>
+            <a href="../../index.html" style="position:absolute; top:20px; left:20px; color:white; font-size:28px; text-decoration:none; font-weight:bold; z-index:100; pointer-events:auto; text-shadow: 0 0 10px rgba(0,242,254,0.8);">❮</a>
             
             <div id="hud" class="hidden">
                 <div class="score-board">স্কোর: <span id="score-val">0</span></div>
             </div>
 
-            <div id="start-menu" class="glass-panel">
-                <h1>বিড়াল দৌড় 3D</h1>
-                <p>ডানে-বামে যেতে, লাফ দিতে এবং নিচে স্লাইড করতে অ্যারো-কি (Arrow Keys) ব্যবহার করুন।</p>
-                <button id="start-btn">খেলা শুরু করুন</button>
+            <div id="start-menu" class="bg-image-screen">
+                <div class="logo-container">
+                    <div class="cartoon-title-top">বিড়াল</div>
+                    <div class="cartoon-title-bottom">দৌড়</div>
+                </div>
+                <div id="start-btn" class="tap-to-play">খেলতে ট্যাপ করুন</div>
             </div>
 
             <div id="game-over-menu" class="glass-panel hidden">
