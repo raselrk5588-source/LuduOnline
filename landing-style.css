@@ -34,7 +34,44 @@ body {
     border-radius: 30px;
     overflow: hidden;
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 1;
 }
+
+/* Floating Animations for Landing Page Background */
+.floating-elements {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10;
+}
+.float-icon {
+    position: absolute;
+    font-size: 40px;
+    opacity: 0.4;
+    animation: floatAnim linear infinite;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes floatAnim {
+    0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; }
+    10% { opacity: 0.5; }
+    90% { opacity: 0.5; }
+    100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; }
+}
+
+.float-icon:nth-child(1) { left: 10%; animation-duration: 15s; animation-delay: 0s; font-size: 50px; }
+.float-icon:nth-child(2) { left: 80%; animation-duration: 20s; animation-delay: 2s; font-size: 45px; }
+.float-icon:nth-child(3) { left: 30%; animation-duration: 12s; animation-delay: 5s; font-size: 60px; }
+.float-icon:nth-child(4) { left: 60%; animation-duration: 18s; animation-delay: 1s; font-size: 35px; }
+.float-icon:nth-child(5) { left: 40%; animation-duration: 22s; animation-delay: 7s; font-size: 55px; }
+.float-icon:nth-child(6) { left: 90%; animation-duration: 14s; animation-delay: 4s; font-size: 40px; }
+.float-icon:nth-child(7) { left: 20%; animation-duration: 17s; animation-delay: 3s; font-size: 48px; }
+.float-icon:nth-child(8) { left: 70%; animation-duration: 19s; animation-delay: 6s; font-size: 52px; }
 
 /* LEFT SIDE */
 .left-pane {
@@ -229,14 +266,14 @@ body {
 /* RIGHT SIDE */
 .right-pane {
     flex: 1 1 350px;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(20, 5, 45, 0.6);
     padding: 30px 20px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     position: relative;
-    border-left: 1px solid rgba(255, 255, 255, 0.5);
+    border-left: 1px solid rgba(138, 43, 226, 0.3);
 }
 
 .auth-box {
@@ -255,11 +292,12 @@ body {
 .auth-header h2 {
     font-size: 32px;
     font-weight: 800;
-    color: #0f172a;
+    color: #ffffff;
     margin-bottom: 12px;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
 }
 .auth-header p {
-    color: #64748b;
+    color: #cbd5e1;
     font-size: 15px;
     line-height: 1.5;
 }
@@ -267,14 +305,14 @@ body {
 .progress-steps {
     display: flex;
     justify-content: space-between;
-    background: #f8fafc;
+    background: rgba(255, 255, 255, 0.05);
     padding: 12px 15px;
     border-radius: 30px;
     margin-bottom: 30px;
     font-size: 13px;
     font-weight: 700;
     color: #94a3b8;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .step {
     display: flex;
@@ -282,17 +320,18 @@ body {
     gap: 6px;
 }
 .step.active {
-    color: #059669;
+    color: #10b981;
 }
 .step-num {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #e2e8f0;
+    background: rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 12px;
+    color: #cbd5e1;
 }
 .step.active .step-num {
     background: #10b981;
@@ -301,8 +340,8 @@ body {
 }
 
 .benefit-list {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
     padding: 18px;
     border-radius: 14px;
     margin-bottom: 30px;
@@ -313,7 +352,7 @@ body {
     gap: 12px;
     font-size: 14px;
     font-weight: 600;
-    color: #166534;
+    color: #a7f3d0;
     margin-bottom: 12px;
 }
 .benefit-item:last-child { margin-bottom: 0; }
@@ -324,12 +363,13 @@ body {
     display: flex; justify-content: center; align-items: center;
     border-radius: 50%;
     font-size: 10px;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
 }
 
 .input-label {
     font-size: 13px;
     font-weight: 700;
-    color: #475569;
+    color: #cbd5e1;
     margin-bottom: 8px;
     display: block;
     text-align: left;
@@ -337,8 +377,8 @@ body {
 
 .phone-input-group {
     display: flex;
-    background: #ffffff;
-    border: 2px solid #cbd5e1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 15px;
@@ -347,13 +387,14 @@ body {
 .phone-input-group:focus-within {
     border-color: #10b981;
     box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    background: rgba(255, 255, 255, 0.1);
 }
 .phone-prefix {
-    background: #f8fafc;
+    background: rgba(255, 255, 255, 0.1);
     padding: 15px 18px;
     font-weight: 700;
-    color: #334155;
-    border-right: 2px solid #cbd5e1;
+    color: #e2e8f0;
+    border-right: 2px solid rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
 }
@@ -363,12 +404,12 @@ body {
     padding: 15px 18px;
     font-size: 18px;
     font-weight: 600;
-    color: #0f172a;
+    color: #ffffff;
     outline: none;
     background: transparent;
 }
 .phone-input::placeholder {
-    color: #94a3b8;
+    color: #64748b;
     font-weight: 400;
 }
 
@@ -376,18 +417,18 @@ body {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    background: #fefce8;
-    color: #854d0e;
+    background: rgba(234, 179, 8, 0.1);
+    color: #fde047;
     padding: 15px;
     border-radius: 12px;
     font-size: 12px;
     line-height: 1.5;
     margin-bottom: 25px;
-    border: 1px solid #fef08a;
+    border: 1px solid rgba(234, 179, 8, 0.3);
 }
 .charge-info i {
     margin-top: 2px;
-    color: #ca8a04;
+    color: #facc15;
 }
 
 .btn-submit {
