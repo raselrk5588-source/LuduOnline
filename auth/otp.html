@@ -171,21 +171,21 @@
         .otp-inputs {
             display: flex;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             margin-bottom: 28px;
         }
 
         .otp-inputs input {
-            width: 58px;
-            height: 62px;
+            width: 46px;
+            height: 54px;
             text-align: center;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 700;
             font-family: 'Inter', sans-serif;
             color: #fff;
             background: rgba(255, 255, 255, 0.07);
             border: 2px solid rgba(255, 255, 255, 0.12);
-            border-radius: 14px;
+            border-radius: 12px;
             outline: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             caret-color: #a29bfe;
@@ -381,13 +381,13 @@
                 margin: 16px;
             }
             .otp-inputs input {
-                width: 50px;
-                height: 54px;
-                font-size: 1.4rem;
-                border-radius: 12px;
+                width: 40px;
+                height: 48px;
+                font-size: 1.2rem;
+                border-radius: 10px;
             }
             .otp-inputs {
-                gap: 10px;
+                gap: 6px;
             }
         }
     </style>
@@ -404,15 +404,17 @@
         </div>
 
         <h1 class="otp-title">ওটিপি যাচাই করুন</h1>
-        <p class="otp-subtitle">আপনার মোবাইলে পাঠানো ৪ ডিজিটের কোডটি দিন</p>
+        <p class="otp-subtitle">আপনার মোবাইলে পাঠানো ৬ ডিজিটের কোডটি দিন</p>
         <p class="otp-phone-display" id="phone-display"></p>
 
-        <!-- 4 Separate OTP Input Boxes -->
+        <!-- 6 Separate OTP Input Boxes -->
         <div class="otp-inputs" id="otp-inputs">
             <input type="tel" maxlength="1" class="otp-digit" data-index="0" autocomplete="one-time-code" inputmode="numeric">
             <input type="tel" maxlength="1" class="otp-digit" data-index="1" inputmode="numeric">
             <input type="tel" maxlength="1" class="otp-digit" data-index="2" inputmode="numeric">
             <input type="tel" maxlength="1" class="otp-digit" data-index="3" inputmode="numeric">
+            <input type="tel" maxlength="1" class="otp-digit" data-index="4" inputmode="numeric">
+            <input type="tel" maxlength="1" class="otp-digit" data-index="5" inputmode="numeric">
         </div>
 
         <!-- Error Message -->
@@ -467,7 +469,7 @@
             // Only allow digits
             e.target.value = val.replace(/[^0-9]/g, '');
             
-            if (e.target.value && idx < 3) {
+            if (e.target.value && idx < 5) {
                 otpDigits[idx + 1].focus();
             }
             
@@ -482,9 +484,9 @@
             // Clear error
             hideError();
 
-            // Auto-verify when all 4 digits are filled
+            // Auto-verify when all 6 digits are filled
             const otp = getOtpValue();
-            if (otp.length === 4) {
+            if (otp.length === 6) {
                 verifyOtp();
             }
         });
@@ -500,18 +502,18 @@
         // Handle paste
         input.addEventListener('paste', (e) => {
             e.preventDefault();
-            const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 4);
+            const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
             pasted.split('').forEach((char, i) => {
                 if (otpDigits[i]) {
                     otpDigits[i].value = char;
                     otpDigits[i].classList.add('filled');
                 }
             });
-            if (pasted.length === 4) {
-                otpDigits[3].focus();
+            if (pasted.length === 6) {
+                otpDigits[5].focus();
                 verifyOtp();
             } else if (pasted.length > 0) {
-                otpDigits[Math.min(pasted.length, 3)].focus();
+                otpDigits[Math.min(pasted.length, 5)].focus();
             }
         });
 
@@ -600,8 +602,8 @@
     async function verifyOtp() {
         const otp = getOtpValue();
 
-        if (otp.length < 4) {
-            showError('অনুগ্রহ করে ৪ ডিজিটের কোড দিন');
+        if (otp.length < 6) {
+            showError('অনুগ্রহ করে ৬ ডিজিটের কোড দিন');
             return;
         }
 
