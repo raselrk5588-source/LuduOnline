@@ -379,8 +379,9 @@ function setupTokenClicks(color, validMoves, diceValue) {
                 moveToken(color, i, diceValue);
             }
             
-            el.onclick = tokenClickHandler;
-            el.ontouchstart = tokenClickHandler;
+            // Use addEventListener for reliable touch re-binding on mobile
+            el.addEventListener('touchstart', tokenClickHandler, { passive: false });
+            el.addEventListener('click', tokenClickHandler);
             el._tokenHandler = tokenClickHandler; 
         });
     }
@@ -391,9 +392,14 @@ function moveToken(color, i, diceValue) {
     gameState = 'moving';
     document.querySelectorAll('.token').forEach(t => {
         t.classList.remove('clickable');
+        // Properly remove event listeners using stored handler
+        if (t._tokenHandler) {
+            t.removeEventListener('touchstart', t._tokenHandler);
+            t.removeEventListener('click', t._tokenHandler);
+            delete t._tokenHandler;
+        }
         t.onclick = null;
         t.ontouchstart = null;
-        delete t._tokenHandler;
     });
 
     let currentPos = tokenPositions[color][i];
