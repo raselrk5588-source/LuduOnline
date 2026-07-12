@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#1a1a2e"/>
+  <!-- Ludo board cross shape -->
+  <rect x="156" y="56" width="200" height="400" rx="16" fill="#e74c3c" opacity="0.9"/>
+  <rect x="56" y="156" width="400" height="200" rx="16" fill="#2ecc71" opacity="0.9"/>
+  <!-- Center square -->
+  <rect x="176" y="176" width="160" height="160" rx="12" fill="#f1c40f"/>
+  <!-- Dice dots -->
+  <circle cx="220" cy="220" r="16" fill="#1a1a2e"/>
+  <circle cx="292" cy="220" r="16" fill="#1a1a2e"/>
+  <circle cx="256" cy="256" r="16" fill="#1a1a2e"/>
+  <circle cx="220" cy="292" r="16" fill="#1a1a2e"/>
+  <circle cx="292" cy="292" r="16" fill="#1a1a2e"/>
+  <!-- Corner markers -->
+  <circle cx="116" cy="116" r="28" fill="#3498db"/>
+  <circle cx="396" cy="116" r="28" fill="#e74c3c"/>
+  <circle cx="116" cy="396" r="28" fill="#2ecc71"/>
+  <circle cx="396" cy="396" r="28" fill="#f39c12"/>
+</svg>

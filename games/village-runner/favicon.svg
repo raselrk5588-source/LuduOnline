@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background - sky -->
+  <rect width="512" height="512" rx="96" fill="#87CEEB"/>
+  <!-- Ground -->
+  <rect x="0" y="340" width="512" height="172" rx="0" fill="#4CAF50"/>
+  <rect x="0" y="340" width="512" height="30" fill="#66BB6A"/>
+  <!-- Cat body -->
+  <ellipse cx="270" cy="290" rx="60" ry="45" fill="#FF8C00"/>
+  <!-- Cat head -->
+  <circle cx="310" cy="240" r="42" fill="#FF8C00"/>
+  <!-- Cat ears -->
+  <polygon points="280,210 290,170 305,210" fill="#FF8C00"/>
+  <polygon points="320,210 335,170 345,210" fill="#FF8C00"/>
+  <polygon points="285,210 293,180 303,210" fill="#FFB366"/>
+  <polygon points="323,210 333,180 342,210" fill="#FFB366"/>
+  <!-- Eyes -->
+  <ellipse cx="298" cy="235" rx="8" ry="10" fill="#fff"/>
+  <ellipse cx="325" cy="235" rx="8" ry="10" fill="#fff"/>
+  <circle cx="300" cy="237" r="5" fill="#1a1a2e"/>
+  <circle cx="327" cy="237" r="5" fill="#1a1a2e"/>
+  <!-- Nose -->
+  <ellipse cx="312" cy="252" rx="5" ry="3" fill="#e91e63"/>
+  <!-- Tail -->
+  <path d="M210,280 Q170,230 185,200" stroke="#FF8C00" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <!-- Legs (running pose) -->
+  <line x1="240" y1="325" x2="220" y2="340" stroke="#FF8C00" stroke-width="14" stroke-linecap="round"/>
+  <line x1="300" y1="325" x2="320" y2="340" stroke="#FF8C00" stroke-width="14" stroke-linecap="round"/>
+  <!-- Speed lines -->
+  <line x1="120" y1="260" x2="170" y2="260" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+  <line x1="100" y1="290" x2="160" y2="290" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="130" y1="310" x2="180" y2="310" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
+</svg>
