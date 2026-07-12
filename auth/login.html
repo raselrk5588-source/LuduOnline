@@ -65,6 +65,15 @@
           localStorage.setItem("phone", phone);
           localStorage.setItem("ref", data.referenceNo);
           window.location.href = "otp.html";
+        } else if (
+          data.statusCode === 'E1351' || 
+          (data.statusDetail && data.statusDetail.toLowerCase().includes("already")) ||
+          (data.message && data.message.toLowerCase().includes("already"))
+        ) {
+          // User is already registered/subscribed — auto login
+          localStorage.setItem("phone", phone);
+          localStorage.setItem("isLoggedIn", true);
+          window.location.href = "../index.html";
         } else {
           alert(data.message || "OTP failed. Try again.");
         }
