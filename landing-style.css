@@ -52,26 +52,18 @@ body {
 .float-icon {
     position: absolute;
     font-size: 40px;
-    opacity: 0.4;
-    animation: floatAnim linear infinite;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    opacity: 0.25;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 
-@keyframes floatAnim {
-    0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; }
-    10% { opacity: 0.5; }
-    90% { opacity: 0.5; }
-    100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; }
-}
-
-.float-icon:nth-child(1) { left: 10%; animation-duration: 15s; animation-delay: 0s; font-size: 50px; }
-.float-icon:nth-child(2) { left: 80%; animation-duration: 20s; animation-delay: 2s; font-size: 45px; }
-.float-icon:nth-child(3) { left: 30%; animation-duration: 12s; animation-delay: 5s; font-size: 60px; }
-.float-icon:nth-child(4) { left: 60%; animation-duration: 18s; animation-delay: 1s; font-size: 35px; }
-.float-icon:nth-child(5) { left: 40%; animation-duration: 22s; animation-delay: 7s; font-size: 55px; }
-.float-icon:nth-child(6) { left: 90%; animation-duration: 14s; animation-delay: 4s; font-size: 40px; }
-.float-icon:nth-child(7) { left: 20%; animation-duration: 17s; animation-delay: 3s; font-size: 48px; }
-.float-icon:nth-child(8) { left: 70%; animation-duration: 19s; animation-delay: 6s; font-size: 52px; }
+.float-icon:nth-child(1) { left: 8%;  top: 5%;  font-size: 42px; transform: rotate(-15deg); }
+.float-icon:nth-child(2) { left: 85%; top: 8%;  font-size: 38px; transform: rotate(20deg); }
+.float-icon:nth-child(3) { left: 25%; top: 18%; font-size: 50px; transform: rotate(-8deg); }
+.float-icon:nth-child(4) { left: 65%; top: 30%; font-size: 32px; transform: rotate(35deg); }
+.float-icon:nth-child(5) { left: 45%; top: 55%; font-size: 44px; transform: rotate(-25deg); }
+.float-icon:nth-child(6) { left: 92%; top: 45%; font-size: 36px; transform: rotate(12deg); }
+.float-icon:nth-child(7) { left: 12%; top: 70%; font-size: 40px; transform: rotate(-30deg); }
+.float-icon:nth-child(8) { left: 75%; top: 75%; font-size: 46px; transform: rotate(18deg); }
 
 /* LEFT SIDE */
 .left-pane {
