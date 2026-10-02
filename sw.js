@@ -1,4 +1,4 @@
-const CACHE_NAME = 'khelaghor-pwa-v5';
+const CACHE_NAME = 'khelaghor-pwa-v6';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -22,6 +22,7 @@ self.addEventListener('install', event => {
                 console.log('Opened cache');
                 return cache.addAll(ASSETS_TO_CACHE);
             })
+            .then(() => self.skipWaiting())
     );
 });
 
@@ -35,7 +36,7 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim())
     );
 });
 
@@ -44,35 +45,18 @@ self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
     
     event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Return cached version if found
-                if (response) {
-                    return response;
-                }
-                
-                // Otherwise fetch from network
-                return fetch(event.request).then(
-                    response => {
-                        // Check if we received a valid response
-                        if(!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
-
-                        // Clone the response because it's a stream
-                        var responseToCache = response.clone();
-
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return response;
-                    }
-                );
-            }).catch(() => {
-                // If network fails and it's an HTML page, maybe show an offline page
-                // But for this PWA, we'll just let it fail or return cached index.html if possible
-            })
+        fetch(event.request).then(response => {
+            // Check if we received a valid response
+            if(response && response.status === 200 && response.type === 'basic') {
+                var responseToCache = response.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseToCache);
+                });
+            }
+            return response;
+        }).catch(() => {
+            // If network fails, fallback to cache
+            return caches.match(event.request);
+        })
     );
 });
